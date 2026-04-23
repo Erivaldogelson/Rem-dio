@@ -1,0 +1,87 @@
+name: Android Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platforms;android-36" "build-tools;36.1.0"
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(grep 'versionName = ' app/build.gradle.kts | head -n1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+
+      - name: Sign release APK
+        run: |
+          keytool -genkeypair \
+            -noprompt \
+            -keystore release.keystore \
+            -storepass android \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -alias remedios-release \
+            -dname "CN=Remedios,O=Remedios,C=BR"
+
+          "$ANDROID_HOME/build-tools/36.1.0/zipalign" -p -f 4 \
+            app/build/outputs/apk/release/app-release-unsigned.apk \
+            "Remedios-${{ steps.version.outputs.version }}-release-aligned.apk"
+
+          "$ANDROID_HOME/build-tools/36.1.0/apksigner" sign \
+            --ks release.keystore \
+            --ks-key-alias remedios-release \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out "Remedios-${{ steps.version.outputs.version }}-release.apk" \
+            "Remedios-${{ steps.version.outputs.version }}-release-aligned.apk"
+
+          "$ANDROID_HOME/build-tools/36.1.0/apksigner" verify --verbose \
+            "Remedios-${{ steps.version.outputs.version }}-release.apk"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Remedios-${{ steps.version.outputs.version }}-release
+          path: Remedios-${{ steps.version.outputs.version }}-release.apk
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" "Remedios-${{ steps.version.outputs.version }}-release.apk" \
+            --title "Remédios ${{ steps.version.outputs.version }}" \
+            --generate-notes

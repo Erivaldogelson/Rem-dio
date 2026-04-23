@@ -1,0 +1,348 @@
+package com.erivaldogelson.remedios.ui.navigation
+
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Today
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.erivaldogelson.remedios.core.AppContainer
+import com.erivaldogelson.remedios.core.AppViewModelFactory
+import com.erivaldogelson.remedios.domain.model.ImageSource
+import com.erivaldogelson.remedios.domain.model.OcrSuggestion
+import com.erivaldogelson.remedios.domain.model.SettingsSnapshot
+import com.erivaldogelson.remedios.ui.components.BottomBarItem
+import com.erivaldogelson.remedios.ui.components.PillBottomNavigation
+import com.erivaldogelson.remedios.ui.screens.ActiveReminderScreen
+import com.erivaldogelson.remedios.ui.screens.AddMedicationScreen
+import com.erivaldogelson.remedios.ui.screens.DashboardScreen
+import com.erivaldogelson.remedios.ui.screens.HistoryScreen
+import com.erivaldogelson.remedios.ui.screens.MedicationDetailScreen
+import com.erivaldogelson.remedios.ui.screens.MedicationListScreen
+import com.erivaldogelson.remedios.ui.screens.OnboardingScreen
+import com.erivaldogelson.remedios.ui.screens.PermissionsScreen
+import com.erivaldogelson.remedios.ui.screens.ScanMedicationScreen
+import com.erivaldogelson.remedios.ui.screens.SettingsScreen
+import com.erivaldogelson.remedios.ui.screens.SplashScreen
+import com.erivaldogelson.remedios.ui.screens.parseTimesInput
+import com.erivaldogelson.remedios.ui.theme.RemediosTheme
+import com.erivaldogelson.remedios.ui.viewmodel.DashboardViewModel
+import com.erivaldogelson.remedios.ui.viewmodel.HistoryViewModel
+import com.erivaldogelson.remedios.ui.viewmodel.MedicationDetailViewModel
+import com.erivaldogelson.remedios.ui.viewmodel.MedicationFormViewModel
+import com.erivaldogelson.remedios.ui.viewmodel.MedicationListViewModel
+import com.erivaldogelson.remedios.ui.viewmodel.OnboardingViewModel
+import com.erivaldogelson.remedios.ui.viewmodel.SettingsViewModel
+
+@Composable
+fun RemediosApp(
+    container: AppContainer,
+) {
+    val settings by container.settingsRepository.settings.collectAsStateWithLifecycle(
+        initialValue = SettingsSnapshot(),
+    )
+    val navController = rememberNavController()
+    val currentEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentEntry?.destination?.route
+    val bottomItems = listOf(
+        BottomBarItem(Routes.Today, "Hoje", Icons.Rounded.Today),
+        BottomBarItem(Routes.History, "Histórico", Icons.Rounded.History),
+        BottomBarItem(Routes.Settings, "Config.", Icons.Rounded.Settings),
+    )
+
+    RemediosTheme(settings = settings) {
+        Scaffold(
+            bottomBar = {
+                if (currentRoute in setOf(Routes.Today, Routes.History, Routes.Settings)) {
+                    PillBottomNavigation(
+                        items = bottomItems,
+                        selectedRoute = currentRoute.orEmpty(),
+                        onSelect = { item ->
+                            navController.navigate(item.route) {
+                                popUpTo(Routes.Today) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                    )
+                }
+            },
+            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        ) { innerPadding ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                NavHost(
+                    navController = navController,
+                    startDestination = Routes.Splash,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    composable(Routes.Splash) {
+                        SplashScreen(
+                            onFinished = {
+                                navController.navigate(
+                                    if (settings.onboardingCompleted) Routes.Today else Routes.Onboarding,
+                                ) {
+                                    popUpTo(Routes.Splash) { inclusive = true }
+                                }
+                            },
+                        )
+                    }
+                    composable(Routes.Onboarding) {
+                        val viewModel: OnboardingViewModel = viewModel(
+                            factory = AppViewModelFactory { OnboardingViewModel(container.settingsRepository) },
+                        )
+                        OnboardingScreen(
+                            onContinue = {
+                                viewModel.completeOnboarding()
+                                navController.navigate(Routes.Today) {
+                                    popUpTo(Routes.Onboarding) { inclusive = true }
+                                }
+                            },
+                        )
+                    }
+                    composable(Routes.Today) {
+                        val viewModel: DashboardViewModel = viewModel(
+                            factory = AppViewModelFactory {
+                                DashboardViewModel(
+                                    medicationRepository = container.medicationRepository,
+                                    reminderScheduler = container.reminderScheduler,
+                                )
+                            },
+                        )
+                        val state by viewModel.state.collectAsStateWithLifecycle()
+                        DashboardScreen(
+                            state = state,
+                            onTakeNow = { viewModel.takeNow(state.nextDose) },
+                            onSnooze = { viewModel.snooze(state.nextDose) },
+                            onSkip = { viewModel.skip(state.nextDose) },
+                            onOpenMedications = { navController.navigate(Routes.Medications) },
+                            onOpenActiveReminder = { navController.navigate(Routes.ActiveReminder) },
+                        )
+                    }
+                    composable(Routes.Medications) {
+                        val viewModel: MedicationListViewModel = viewModel(
+                            factory = AppViewModelFactory { MedicationListViewModel(container.medicationRepository) },
+                        )
+                        val medications by viewModel.medications.collectAsStateWithLifecycle()
+                        MedicationListScreen(
+                            medications = medications,
+                            onAddMedication = { navController.navigate(Routes.AddMedication) },
+                            onMedicationClick = { medication ->
+                                navController.navigate(Routes.medicationDetail(medication.id))
+                            },
+                        )
+                    }
+                    composable(Routes.AddMedication) {
+                        AddMedicationRoute(
+                            container = container,
+                            navController = navController,
+                        )
+                    }
+                    composable(Routes.ScanMedication) {
+                        ScanMedicationScreen(
+                            onConfirmSuggestion = { suggestion ->
+                                navController.previousBackStackEntry?.savedStateHandle?.apply {
+                                    set("ocr_name", suggestion.suggestedName)
+                                    set("ocr_dose", suggestion.suggestedDosage)
+                                    set("ocr_manufacturer", suggestion.suggestedManufacturer)
+                                    set("ocr_instructions", suggestion.suggestedInstructions)
+                                    set("ocr_raw", suggestion.rawText)
+                                }
+                                navController.popBackStack()
+                            },
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable(
+                        route = Routes.MedicationDetail,
+                        arguments = listOf(navArgument("medicationId") { type = NavType.LongType }),
+                    ) { backStackEntry ->
+                        val medicationId = backStackEntry.arguments?.getLong("medicationId") ?: 0L
+                        val viewModel: MedicationDetailViewModel = viewModel(
+                            factory = AppViewModelFactory {
+                                MedicationDetailViewModel(medicationId, container.medicationRepository)
+                            },
+                        )
+                        val detail by viewModel.detail.collectAsStateWithLifecycle()
+                        MedicationDetailScreen(
+                            details = detail,
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable(Routes.History) {
+                        val viewModel: HistoryViewModel = viewModel(
+                            factory = AppViewModelFactory { HistoryViewModel(container.medicationRepository) },
+                        )
+                        val items by viewModel.items.collectAsStateWithLifecycle()
+                        val filter by viewModel.selectedFilter.collectAsStateWithLifecycle()
+                        HistoryScreen(
+                            items = items,
+                            selectedFilter = filter,
+                            onSelectFilter = viewModel::selectFilter,
+                        )
+                    }
+                    composable(Routes.Settings) {
+                        val viewModel: SettingsViewModel = viewModel(
+                            factory = AppViewModelFactory { SettingsViewModel(container.settingsRepository) },
+                        )
+                        val state by viewModel.settings.collectAsStateWithLifecycle()
+                        SettingsScreen(
+                            settings = state,
+                            onThemeModeChange = viewModel::setThemeMode,
+                            onDynamicColorChange = viewModel::setDynamicColor,
+                            onLiveUpdatesChange = viewModel::setLiveUpdates,
+                            onHapticsChange = viewModel::setHaptics,
+                            onOpenPermissions = { navController.navigate(Routes.Permissions) },
+                        )
+                    }
+                    composable(Routes.Permissions) {
+                        PermissionsRoute(
+                            navController = navController,
+                        )
+                    }
+                    composable(Routes.ActiveReminder) {
+                        val viewModel: DashboardViewModel = viewModel(
+                            factory = AppViewModelFactory {
+                                DashboardViewModel(
+                                    medicationRepository = container.medicationRepository,
+                                    reminderScheduler = container.reminderScheduler,
+                                )
+                            },
+                        )
+                        val state by viewModel.state.collectAsStateWithLifecycle()
+                        ActiveReminderScreen(
+                            activeReminder = state.activeReminder,
+                            onTakeNow = { viewModel.takeNow(state.nextDose) },
+                            onSnooze = { viewModel.snooze(state.nextDose) },
+                            onSkip = { viewModel.skip(state.nextDose) },
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddMedicationRoute(
+    container: AppContainer,
+    navController: androidx.navigation.NavHostController,
+) {
+    val viewModel: MedicationFormViewModel = viewModel(
+        factory = AppViewModelFactory {
+            MedicationFormViewModel(
+                medicationRepository = container.medicationRepository,
+                imageManager = container.imageManager,
+                textRecognizer = container.textRecognizer,
+            )
+        },
+    )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var captureUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let { viewModel.onImageSelected(it, ImageSource.GALLERY) }
+    }
+    val takePictureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) {
+            captureUri?.let { viewModel.onImageSelected(it, ImageSource.CAMERA) }
+        }
+    }
+
+    val addEntry = remember(navController) { navController.getBackStackEntry(Routes.AddMedication) }
+    val savedStateHandle = addEntry.savedStateHandle
+    val ocrRaw by savedStateHandle.getStateFlow("ocr_raw", "").collectAsStateWithLifecycle()
+    val ocrName by savedStateHandle.getStateFlow("ocr_name", "").collectAsStateWithLifecycle()
+    val ocrDose by savedStateHandle.getStateFlow("ocr_dose", "").collectAsStateWithLifecycle()
+    val ocrManufacturer by savedStateHandle.getStateFlow("ocr_manufacturer", "").collectAsStateWithLifecycle()
+    val ocrInstructions by savedStateHandle.getStateFlow("ocr_instructions", "").collectAsStateWithLifecycle()
+
+    LaunchedEffect(ocrRaw, ocrName, ocrDose, ocrManufacturer, ocrInstructions) {
+        if (ocrRaw.isNotBlank()) {
+            viewModel.applyOcrSuggestion(
+                OcrSuggestion(
+                    rawText = ocrRaw,
+                    suggestedName = ocrName,
+                    suggestedDosage = ocrDose,
+                    suggestedManufacturer = ocrManufacturer,
+                    suggestedInstructions = ocrInstructions,
+                ),
+            )
+            savedStateHandle["ocr_raw"] = ""
+            savedStateHandle["ocr_name"] = ""
+            savedStateHandle["ocr_dose"] = ""
+            savedStateHandle["ocr_manufacturer"] = ""
+            savedStateHandle["ocr_instructions"] = ""
+        }
+    }
+
+    LaunchedEffect(uiState.savedMedicationId) {
+        if (uiState.savedMedicationId != null) {
+            viewModel.consumeSavedState()
+            navController.popBackStack()
+        }
+    }
+
+    AddMedicationScreen(
+        uiState = uiState,
+        onNameChange = viewModel::updateName,
+        onDosageChange = viewModel::updateDosage,
+        onFrequencyChange = viewModel::updateFrequency,
+        onTimesChange = { viewModel.updateTimes(parseTimesInput(it)) },
+        onInstructionsChange = viewModel::updateInstructions,
+        onNotesChange = viewModel::updateNotes,
+        onManufacturerChange = viewModel::updateManufacturer,
+        onQuantityChange = viewModel::updateQuantity,
+        onFormChange = viewModel::updateForm,
+        onPickImage = {
+            galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        },
+        onCaptureImage = {
+            val uri = container.imageManager.createCaptureUri()
+            captureUri = uri
+            takePictureLauncher.launch(uri)
+        },
+        onOpenScan = { navController.navigate(Routes.ScanMedication) },
+        onApplySuggestion = { uiState.draft.ocrSuggestion?.let(viewModel::applyOcrSuggestion) },
+        onSave = viewModel::saveMedication,
+        onBack = { navController.popBackStack() },
+    )
+}
+
+@Composable
+private fun PermissionsRoute(
+    navController: androidx.navigation.NavHostController,
+) {
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    PermissionsScreen(
+        onRequestCamera = { cameraLauncher.launch(Manifest.permission.CAMERA) },
+        onRequestNotifications = {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        },
+        onBack = { navController.popBackStack() },
+    )
+}

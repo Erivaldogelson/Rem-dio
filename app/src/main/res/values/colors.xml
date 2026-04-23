@@ -1,0 +1,7 @@
+<resources>
+    <color name="launcher_background">#FFFFFF</color>
+    <color name="launcher_pill">#9167F7</color>
+    <color name="launcher_shadow">#D7CBFF</color>
+    <color name="notification_accent">#AA8CFF</color>
+</resources>
+

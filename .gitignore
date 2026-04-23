@@ -1,0 +1,12 @@
+*.iml
+.gradle/
+.idea/
+.kotlin/
+build/
+captures/
+local.properties
+app/build/
+app/release/
+app/debug/
+artifacts/
+.DS_Store
