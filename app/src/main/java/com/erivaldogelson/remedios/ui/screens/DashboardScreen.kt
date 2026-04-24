@@ -52,7 +52,11 @@ fun DashboardScreen(
 ) {
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val nextDoseMaxWidth = if (maxWidth >= 720.dp) 360.dp else 440.dp
+            val nextDoseSize = when {
+                maxWidth >= 900.dp -> 320.dp
+                maxWidth >= 720.dp -> 300.dp
+                else -> 290.dp
+            }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -77,8 +81,7 @@ fun DashboardScreen(
             NextDoseCircle(
                 nextDose = state.nextDose,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = nextDoseMaxWidth)
+                    .size(nextDoseSize)
                     .align(Alignment.CenterHorizontally)
                     .padding(horizontal = 10.dp),
             )

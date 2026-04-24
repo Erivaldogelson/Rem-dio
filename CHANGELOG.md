@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.7 - 2026-04-24
+
+- corrige o tamanho do círculo de próxima dose em tablets, dobráveis e telas grandes
+- limita e centraliza a navegação inferior para ficar em formato de pílula em telas largas
+- adiciona configuração de cor e tonalidade da Now Bar / Live Updates
+- adiciona seletor de idioma com opção Sistema e todos os idiomas disponíveis no Android
+- aplica a localidade escolhida ao app em versões compatíveis do Android
+
 ## 0.1.6 - 2026-04-24
 
 - Now Bar / Live Updates agora só aparecem para remédios ainda salvos e são canceladas ao apagar um remédio

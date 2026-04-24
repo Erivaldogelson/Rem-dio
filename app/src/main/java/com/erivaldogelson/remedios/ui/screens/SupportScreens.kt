@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material3.Card
@@ -35,7 +36,9 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -50,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -75,6 +79,7 @@ import com.erivaldogelson.remedios.ui.theme.Warning
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.coroutines.delay
 
 @Composable
@@ -126,10 +131,14 @@ fun SettingsScreen(
     onDynamicColorChange: (Boolean) -> Unit,
     onLiveUpdatesChange: (Boolean) -> Unit,
     onHapticsChange: (Boolean) -> Unit,
+    onLanguageChange: (String) -> Unit,
+    onNowBarColorChange: (Long) -> Unit,
+    onNowBarToneChange: (Int) -> Unit,
     onOpenPermissions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var selectedSection by remember { mutableStateOf<SettingsSection?>(null) }
+    var showLanguageSheet by remember { mutableStateOf(false) }
 
     when (selectedSection) {
         SettingsSection.APPEARANCE -> SettingsSubpage(
@@ -142,6 +151,7 @@ fun SettingsScreen(
                 settings = settings,
                 onThemeModeChange = onThemeModeChange,
                 onDynamicColorChange = onDynamicColorChange,
+                onOpenLanguage = { showLanguageSheet = true },
             )
         }
 
@@ -155,6 +165,8 @@ fun SettingsScreen(
                 settings = settings,
                 onLiveUpdatesChange = onLiveUpdatesChange,
                 onHapticsChange = onHapticsChange,
+                onNowBarColorChange = onNowBarColorChange,
+                onNowBarToneChange = onNowBarToneChange,
                 onOpenPermissions = onOpenPermissions,
             )
         }
@@ -172,8 +184,20 @@ fun SettingsScreen(
             onOpenAppearance = { selectedSection = SettingsSection.APPEARANCE },
             onOpenReminders = { selectedSection = SettingsSection.REMINDERS },
             onOpenAbout = { selectedSection = SettingsSection.ABOUT },
+            onOpenLanguage = { showLanguageSheet = true },
             onOpenPermissions = onOpenPermissions,
             modifier = modifier,
+        )
+    }
+
+    if (showLanguageSheet) {
+        LanguagePickerSheet(
+            selectedLanguageTag = settings.languageTag,
+            onSelectLanguage = { tag ->
+                onLanguageChange(tag)
+                showLanguageSheet = false
+            },
+            onDismiss = { showLanguageSheet = false },
         )
     }
 }
@@ -189,6 +213,7 @@ private fun SettingsHome(
     onOpenAppearance: () -> Unit,
     onOpenReminders: () -> Unit,
     onOpenAbout: () -> Unit,
+    onOpenLanguage: () -> Unit,
     onOpenPermissions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -235,7 +260,8 @@ private fun SettingsHome(
             SettingsMenuCard(
                 icon = "🌐",
                 title = "Idioma",
-                subtitle = "Português do Brasil",
+                subtitle = "Sistema, Português e todos os idiomas disponíveis",
+                onClick = onOpenLanguage,
             )
             AnimatedPrimaryActionButton(
                 text = "Gerenciar permissões",
@@ -339,6 +365,7 @@ private fun AppearanceSettingsContent(
     settings: SettingsSnapshot,
     onThemeModeChange: (AppThemeMode) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit,
+    onOpenLanguage: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Card(
@@ -375,6 +402,12 @@ private fun AppearanceSettingsContent(
             subtitle = "Adapta detalhes do app às cores do dispositivo quando disponível.",
             trailing = { Switch(checked = settings.dynamicColorEnabled, onCheckedChange = onDynamicColorChange) },
         )
+        RoundedSettingsCard(
+            title = "Idioma",
+            subtitle = languageSubtitle(settings.languageTag),
+            trailing = { Text("›", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            onClick = onOpenLanguage,
+        )
     }
 }
 
@@ -383,6 +416,8 @@ private fun ReminderSettingsContent(
     settings: SettingsSnapshot,
     onLiveUpdatesChange: (Boolean) -> Unit,
     onHapticsChange: (Boolean) -> Unit,
+    onNowBarColorChange: (Long) -> Unit,
+    onNowBarToneChange: (Int) -> Unit,
     onOpenPermissions: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -391,6 +426,42 @@ private fun ReminderSettingsContent(
             subtitle = "Só ativa quando existir remédio salvo com próxima dose.",
             trailing = { Switch(checked = settings.liveUpdatesEnabled, onCheckedChange = onLiveUpdatesChange) },
         )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(34.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Text("Cor da Now Bar", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    nowBarColorOptions.forEach { option ->
+                        Surface(
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                                .clickable { onNowBarColorChange(option.argb) },
+                            shape = CircleShape,
+                            color = Color(option.argb),
+                        ) {
+                            if (settings.nowBarColor == option.argb) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Rounded.Check, contentDescription = option.label, tint = Color.White)
+                                }
+                            }
+                        }
+                    }
+                }
+                Text("Tonalidade: ${settings.nowBarTone}%", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Slider(
+                    value = settings.nowBarTone.toFloat(),
+                    onValueChange = { onNowBarToneChange(it.toInt()) },
+                    valueRange = 0f..100f,
+                )
+            }
+        }
         RoundedSettingsCard(
             title = "Feedback tátil",
             subtitle = "Aplica vibração suave em botões, navegação e cartões.",
@@ -404,6 +475,106 @@ private fun ReminderSettingsContent(
         )
     }
 }
+
+private data class NowBarColorOption(val label: String, val argb: Long)
+
+private val nowBarColorOptions = listOf(
+    NowBarColorOption("Lavanda", 0xFFAA8CFF),
+    NowBarColorOption("Azul", 0xFF5D7CFA),
+    NowBarColorOption("Verde", 0xFF008577),
+    NowBarColorOption("Menta", 0xFF4D8F7A),
+    NowBarColorOption("Rosa", 0xFFD85D8F),
+    NowBarColorOption("Âmbar", 0xFFC77822),
+)
+
+@Composable
+private fun LanguagePickerSheet(
+    selectedLanguageTag: String,
+    onSelectLanguage: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val languages = remember {
+        buildList {
+            add(LanguageOption("system", "System", "Use device language"))
+            addAll(
+                Locale.getAvailableLocales()
+                    .filter { it.language.isNotBlank() && it.toLanguageTag().isNotBlank() }
+                    .distinctBy { it.toLanguageTag() }
+                    .sortedWith(compareBy<Locale> { it.getDisplayLanguage(Locale.ENGLISH) }.thenBy { it.country })
+                    .map { locale ->
+                        LanguageOption(
+                            tag = locale.toLanguageTag(),
+                            title = locale.getDisplayName(locale).replaceFirstChar(Char::titlecase),
+                            subtitle = locale.toLanguageTag(),
+                        )
+                    },
+            )
+        }
+    }
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text("Choose language", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(520.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                items(languages) { language ->
+                    val selected = language.tag == selectedLanguageTag
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelectLanguage(language.tag) },
+                        shape = RoundedCornerShape(24.dp),
+                        color = if (selected) {
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.78f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.48f)
+                        },
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 18.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(language.title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
+                                if (language.subtitle.isNotBlank()) {
+                                    Text(language.subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                            if (selected) {
+                                Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+private data class LanguageOption(
+    val tag: String,
+    val title: String,
+    val subtitle: String,
+)
+
+private fun languageSubtitle(languageTag: String): String =
+    if (languageTag == "system") {
+        "System"
+    } else {
+        Locale.forLanguageTag(languageTag).getDisplayName(Locale.forLanguageTag(languageTag))
+    }
 
 @Composable
 private fun AboutSettingsContent() {
@@ -678,6 +849,9 @@ private fun SettingsPreview() {
             onDynamicColorChange = { _ -> },
             onLiveUpdatesChange = { _ -> },
             onHapticsChange = { _ -> },
+            onLanguageChange = { _ -> },
+            onNowBarColorChange = { _ -> },
+            onNowBarToneChange = { _ -> },
             onOpenPermissions = {},
         )
     }

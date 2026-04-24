@@ -43,6 +43,19 @@ class SettingsRepositoryImpl(
         persistSnapshot(preferencesRepository.settingsValue().copy(hapticsEnabled = enabled))
     }
 
+    override suspend fun setLanguageTag(languageTag: String) {
+        preferencesRepository.setLanguageTag(languageTag)
+        persistSnapshot(preferencesRepository.settingsValue().copy(languageTag = languageTag))
+    }
+
+    override suspend fun setNowBarColor(color: Long) {
+        preferencesRepository.setNowBarColor(color)
+    }
+
+    override suspend fun setNowBarTone(tone: Int) {
+        preferencesRepository.setNowBarTone(tone)
+    }
+
     private suspend fun persistSnapshot(snapshot: SettingsSnapshot) {
         settingsDao.upsert(
             AppSettingsEntity(

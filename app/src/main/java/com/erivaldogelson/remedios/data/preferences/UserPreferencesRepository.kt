@@ -6,6 +6,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.erivaldogelson.remedios.domain.model.AppThemeMode
 import com.erivaldogelson.remedios.domain.model.SettingsSnapshot
@@ -32,6 +34,8 @@ class UserPreferencesRepository(context: Context) {
         val liveUpdates = booleanPreferencesKey("live_updates")
         val haptics = booleanPreferencesKey("haptics")
         val languageTag = stringPreferencesKey("language_tag")
+        val nowBarColor = longPreferencesKey("now_bar_color")
+        val nowBarTone = intPreferencesKey("now_bar_tone")
     }
 
     val settings: Flow<SettingsSnapshot> = dataStore.data
@@ -60,6 +64,18 @@ class UserPreferencesRepository(context: Context) {
         it[Keys.haptics] = enabled
     }
 
+    suspend fun setLanguageTag(languageTag: String) = dataStore.edit {
+        it[Keys.languageTag] = languageTag
+    }
+
+    suspend fun setNowBarColor(color: Long) = dataStore.edit {
+        it[Keys.nowBarColor] = color
+    }
+
+    suspend fun setNowBarTone(tone: Int) = dataStore.edit {
+        it[Keys.nowBarTone] = tone.coerceIn(0, 100)
+    }
+
     suspend fun settingsValue(): SettingsSnapshot = settings.first()
 
     private fun Preferences.toSettings(): SettingsSnapshot = SettingsSnapshot(
@@ -70,6 +86,8 @@ class UserPreferencesRepository(context: Context) {
         onboardingCompleted = this[Keys.onboardingCompleted] ?: false,
         liveUpdatesEnabled = this[Keys.liveUpdates] ?: true,
         hapticsEnabled = this[Keys.haptics] ?: true,
-        languageTag = this[Keys.languageTag] ?: "pt-BR",
+        languageTag = this[Keys.languageTag] ?: "system",
+        nowBarColor = this[Keys.nowBarColor] ?: 0xFFAA8CFF,
+        nowBarTone = this[Keys.nowBarTone] ?: 50,
     )
 }

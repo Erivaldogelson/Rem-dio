@@ -152,5 +152,7 @@ data class SettingsSnapshot(
     val onboardingCompleted: Boolean = false,
     val liveUpdatesEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
-    val languageTag: String = "pt-BR",
+    val languageTag: String = "system",
+    val nowBarColor: Long = 0xFFAA8CFF,
+    val nowBarTone: Int = 50,
 )

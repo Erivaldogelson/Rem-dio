@@ -15,12 +15,17 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.erivaldogelson.remedios.data.preferences.UserPreferencesRepository
 import com.erivaldogelson.remedios.MainActivity
 import com.erivaldogelson.remedios.R
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-class MedicationLiveUpdateManager(private val context: Context) {
+class MedicationLiveUpdateManager(
+    private val context: Context,
+    private val preferencesRepository: UserPreferencesRepository,
+) {
     private val notificationManager: NotificationManager =
         context.getSystemService(NotificationManager::class.java)
 
@@ -137,11 +142,22 @@ class MedicationLiveUpdateManager(private val context: Context) {
             .build()
 
     private fun notificationAccentColor(): Int =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            context.getColor(android.R.color.system_accent1_200)
-        } else {
-            ContextCompat.getColor(context, R.color.notification_accent)
+        runBlocking {
+            val settings = preferencesRepository.settingsValue()
+            applyTone(settings.nowBarColor, settings.nowBarTone)
         }
+
+    private fun applyTone(color: Long, tone: Int): Int {
+        val clampedTone = tone.coerceIn(0, 100)
+        val argb = color.toInt()
+        val red = (argb shr 16) and 0xFF
+        val green = (argb shr 8) and 0xFF
+        val blue = argb and 0xFF
+        val target = if (clampedTone < 50) 255 else 0
+        val fraction = kotlin.math.abs(clampedTone - 50) / 50f
+        fun blend(channel: Int): Int = (channel + ((target - channel) * fraction)).toInt().coerceIn(0, 255)
+        return android.graphics.Color.rgb(blend(red), blend(green), blend(blue))
+    }
 
     @RequiresApi(23)
     private fun buildPlatformAction(

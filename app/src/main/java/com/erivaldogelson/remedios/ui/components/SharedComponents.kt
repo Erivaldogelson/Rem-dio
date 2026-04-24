@@ -156,8 +156,8 @@ fun PillBottomNavigation(
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Surface(
             modifier = Modifier
+                .widthIn(max = 560.dp)
                 .fillMaxWidth()
-                .widthIn(max = 680.dp)
                 .padding(horizontal = 20.dp, vertical = 14.dp),
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.92f),
             shape = RoundedCornerShape(36.dp),

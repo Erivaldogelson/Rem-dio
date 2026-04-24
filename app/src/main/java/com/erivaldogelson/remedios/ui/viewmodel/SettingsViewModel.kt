@@ -29,5 +29,16 @@ class SettingsViewModel(
     fun setHaptics(enabled: Boolean) = viewModelScope.launch {
         settingsRepository.setHaptics(enabled)
     }
-}
 
+    fun setLanguageTag(languageTag: String) = viewModelScope.launch {
+        settingsRepository.setLanguageTag(languageTag)
+    }
+
+    fun setNowBarColor(color: Long) = viewModelScope.launch {
+        settingsRepository.setNowBarColor(color)
+    }
+
+    fun setNowBarTone(tone: Int) = viewModelScope.launch {
+        settingsRepository.setNowBarTone(tone)
+    }
+}

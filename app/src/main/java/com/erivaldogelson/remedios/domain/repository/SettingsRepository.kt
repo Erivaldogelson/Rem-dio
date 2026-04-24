@@ -11,5 +11,7 @@ interface SettingsRepository {
     suspend fun setDynamicColor(enabled: Boolean)
     suspend fun setLiveUpdates(enabled: Boolean)
     suspend fun setHaptics(enabled: Boolean)
+    suspend fun setLanguageTag(languageTag: String)
+    suspend fun setNowBarColor(color: Long)
+    suspend fun setNowBarTone(tone: Int)
 }
-

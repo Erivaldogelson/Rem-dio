@@ -48,7 +48,7 @@ class DefaultAppContainer(
         MedicationTextRecognizer(context, ocrParser)
     }
     override val liveUpdateManager: MedicationLiveUpdateManager by lazy {
-        MedicationLiveUpdateManager(context)
+        MedicationLiveUpdateManager(context, preferencesRepository)
     }
     override val reminderScheduler: ReminderScheduler by lazy {
         ReminderScheduler(

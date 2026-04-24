@@ -1,7 +1,9 @@
 package com.erivaldogelson.remedios.ui.navigation
 
 import android.Manifest
+import android.app.LocaleManager
 import android.os.Build
+import android.os.LocaleList
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -57,6 +60,7 @@ import com.erivaldogelson.remedios.ui.viewmodel.MedicationListViewModel
 import com.erivaldogelson.remedios.ui.viewmodel.OnboardingViewModel
 import com.erivaldogelson.remedios.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.flow.first
+import java.util.Locale
 
 @Composable
 fun RemediosApp(
@@ -65,6 +69,7 @@ fun RemediosApp(
     val settings by container.settingsRepository.settings.collectAsStateWithLifecycle(
         initialValue = SettingsSnapshot(),
     )
+    val context = LocalContext.current
     val navController = rememberNavController()
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
@@ -75,6 +80,10 @@ fun RemediosApp(
         BottomBarItem(Routes.History, "Histórico", Icons.Rounded.History),
         BottomBarItem(Routes.Settings, "Config.", Icons.Rounded.Settings),
     )
+
+    LaunchedEffect(settings.languageTag) {
+        applyAppLanguage(context, settings.languageTag)
+    }
 
     RemediosTheme(settings = settings) {
         Scaffold(
@@ -242,6 +251,9 @@ fun RemediosApp(
                             onDynamicColorChange = viewModel::setDynamicColor,
                             onLiveUpdatesChange = viewModel::setLiveUpdates,
                             onHapticsChange = viewModel::setHaptics,
+                            onLanguageChange = viewModel::setLanguageTag,
+                            onNowBarColorChange = viewModel::setNowBarColor,
+                            onNowBarToneChange = viewModel::setNowBarTone,
                             onOpenPermissions = { navController.navigate(Routes.Permissions) },
                         )
                     }
@@ -272,6 +284,16 @@ fun RemediosApp(
                 }
             }
         }
+    }
+}
+
+private fun applyAppLanguage(context: android.content.Context, languageTag: String) {
+    val tag = languageTag.takeUnless { it == "system" }.orEmpty()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        context.getSystemService(LocaleManager::class.java).applicationLocales = LocaleList.forLanguageTags(tag)
+    }
+    if (tag.isNotBlank()) {
+        Locale.setDefault(Locale.forLanguageTag(tag))
     }
 }
 
