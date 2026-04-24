@@ -290,10 +290,16 @@ fun RemediosApp(
 private fun applyAppLanguage(context: android.content.Context, languageTag: String) {
     val tag = languageTag.takeUnless { it == "system" }.orEmpty()
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        context.getSystemService(LocaleManager::class.java).applicationLocales = LocaleList.forLanguageTags(tag)
+        val localeManager = context.getSystemService(LocaleManager::class.java)
+        if (localeManager.applicationLocales.toLanguageTags() != tag) {
+            localeManager.applicationLocales = LocaleList.forLanguageTags(tag)
+        }
     }
     if (tag.isNotBlank()) {
-        Locale.setDefault(Locale.forLanguageTag(tag))
+        val locale = Locale.forLanguageTag(tag)
+        if (Locale.getDefault().toLanguageTag() != locale.toLanguageTag()) {
+            Locale.setDefault(locale)
+        }
     }
 }
 

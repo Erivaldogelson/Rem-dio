@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.8 - 2026-04-24
+
+- corrige loop de recriação da Activity ao aplicar idioma, evitando a tela piscar e impedir a abertura do app
+
 ## 0.1.7 - 2026-04-24
 
 - corrige o tamanho do círculo de próxima dose em tablets, dobráveis e telas grandes
