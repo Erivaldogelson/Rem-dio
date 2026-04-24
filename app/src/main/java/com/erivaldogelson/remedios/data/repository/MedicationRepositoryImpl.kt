@@ -47,7 +47,7 @@ class MedicationRepositoryImpl(
     ) { medications, logs, activeReminder ->
         val now = LocalDateTime.now(clock)
         val nextDose = medications
-            .mapNotNull { item -> item.toNextDose(now) }
+            .mapNotNull { item -> item.toNextDose(now, logs) }
             .minByOrNull { it.scheduledAt }
 
         val today = now.toLocalDate()
@@ -126,6 +126,11 @@ class MedicationRepositoryImpl(
                 )
             }
         }
+
+    override suspend fun deleteMedication(id: Long) {
+        medicationDao.deleteMedicationWithData(id)
+        rescheduleReminders()
+    }
 
     override fun observeHistory(filter: HistoryFilter): Flow<List<DoseLogItemModel>> = combine(
         medicationDao.observeMedicationCards(),
@@ -259,11 +264,16 @@ class MedicationRepositoryImpl(
 
         reminderDao.deactivateActiveReminders()
         if (action == ReminderAction.SNOOZE) {
+            val snoozedAt = if (scheduledAt.isAfter(actedAt)) {
+                scheduledAt.plusMinutes(15)
+            } else {
+                actedAt.plusMinutes(15)
+            }
             val snoozedReminder = ReminderEntity(
                 medicationId = medicationId,
                 scheduleId = scheduleId,
-                triggerAt = actedAt.plusMinutes(15),
-                expiresAt = actedAt.plusMinutes(60),
+                triggerAt = snoozedAt,
+                expiresAt = snoozedAt.plusMinutes(45),
                 isActive = false,
                 action = ReminderAction.SNOOZE,
             )
@@ -336,12 +346,27 @@ class MedicationRepositoryImpl(
         return starts && ends
     }
 
-    private fun MedicationWithAssets.toNextDose(now: LocalDateTime): NextDoseSnapshot? {
+    private fun MedicationWithAssets.toNextDose(
+        now: LocalDateTime,
+        doseLogs: List<DoseLogEntity> = emptyList(),
+    ): NextDoseSnapshot? {
+        val completedOccurrences = doseLogs
+            .filter { log ->
+                log.medicationId == medication.id &&
+                    log.status in setOf(DoseStatus.TAKEN, DoseStatus.SKIPPED)
+            }
+            .map { log -> (log.scheduleId ?: 0L) to log.scheduledAt }
+            .toSet()
+
         val nextSchedule = schedules
             .mapNotNull { schedule ->
                 nextOccurrenceFor(schedule.time, medication, now)?.let { nextTime ->
                     schedule to nextTime
                 }
+            }
+            .filterNot { (schedule, scheduledAt) ->
+                val occurrenceKey = (schedule.id.takeIf { it != 0L } ?: 0L) to scheduledAt
+                occurrenceKey in completedOccurrences
             }
             .minByOrNull { (_, scheduledAt) -> scheduledAt }
             ?: return null

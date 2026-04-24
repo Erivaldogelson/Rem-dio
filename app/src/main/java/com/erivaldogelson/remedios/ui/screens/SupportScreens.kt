@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -31,6 +32,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -49,6 +55,10 @@ import com.erivaldogelson.remedios.ui.theme.Mist
 import com.erivaldogelson.remedios.ui.theme.MistMuted
 import com.erivaldogelson.remedios.ui.theme.RemediosTheme
 import com.erivaldogelson.remedios.ui.theme.Warning
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
 
 @Composable
 fun HistoryScreen(
@@ -267,6 +277,25 @@ fun ActiveReminderScreen(
                         message = "Quando um horário entrar em andamento, ele aparece aqui com ações rápidas.",
                     )
                 } else {
+                    var now by remember(activeReminder.reminderId) { mutableStateOf(LocalDateTime.now()) }
+                    LaunchedEffect(activeReminder.reminderId) {
+                        while (true) {
+                            now = LocalDateTime.now()
+                            delay(1_000)
+                        }
+                    }
+                    val totalMillis = Duration.between(activeReminder.triggerAt, activeReminder.expiresAt)
+                        .toMillis()
+                        .coerceAtLeast(1L)
+                    val elapsedMillis = Duration.between(activeReminder.triggerAt, now)
+                        .toMillis()
+                        .coerceIn(0L, totalMillis)
+                    val progress = elapsedMillis / totalMillis.toFloat()
+                    val remainingMinutes = Duration.between(now, activeReminder.expiresAt)
+                        .toMinutes()
+                        .coerceAtLeast(0L)
+                    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
                     Text("Dose em andamento", style = MaterialTheme.typography.displayMedium, color = Mist)
                     Text(
                         activeReminder.medicationName,
@@ -276,7 +305,13 @@ fun ActiveReminderScreen(
                     Text(activeReminder.dosage, style = MaterialTheme.typography.titleLarge, color = MistMuted)
                     EmptyStateCard(
                         title = "Janela de registro",
-                        message = "A dose permanece ativa até ${activeReminder.expiresAt.toLocalTime()} com suporte para ações rápidas e notificação promovida quando compatível.",
+                        message = "Restam ${remainingMinutes} min para registrar. Ativa at? ${activeReminder.expiresAt.format(timeFormatter)} com a??es r?pidas e Now Bar quando compat?vel.",
+                    )
+                    LinearProgressIndicator(
+                        progress = { progress.coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Warning,
+                        trackColor = Mist.copy(alpha = 0.14f),
                     )
                     AnimatedPrimaryActionButton(
                         text = "Registrar tomada",

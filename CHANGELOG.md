@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.2 - 2026-04-24
+
+- logo atualizada para p?lula em efeito 3D sobre fundo branco
+- Now Bar / Live Updates refor?ada com s?mbolo ?? e ativa??o por rem?dio
+- navega??o inferior em p?lula agora inclui Ver rem?dios e Adicionar
+- removido o bot?o de adicionar da tela Ver rem?dios
+- cart?es de rem?dios salvos ganharam bot?o para apagar o cadastro e seus dados ligados
+- temporizador de Pr?xima dose / Lembrete ativo agora progride em tempo real
+- a??es Tomar dose, Adiar e Ignorar atualizam hist?rico, estoque, lembretes e pr?xima dose visivelmente
+
 ## 0.1.1 - 2026-04-24
 
 - removidos os medicamentos de exemplo do primeiro uso e de instalações atualizadas

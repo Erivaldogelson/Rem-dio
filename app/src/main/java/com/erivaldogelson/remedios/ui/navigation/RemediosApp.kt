@@ -8,7 +8,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Medication
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Today
 import androidx.compose.material3.Scaffold
@@ -67,6 +69,8 @@ fun RemediosApp(
     val currentRoute = currentEntry?.destination?.route
     val bottomItems = listOf(
         BottomBarItem(Routes.Today, "Hoje", Icons.Rounded.Today),
+        BottomBarItem(Routes.Medications, "Rem?dios", Icons.Rounded.Medication),
+        BottomBarItem(Routes.AddMedication, "Adicionar", Icons.Rounded.Add),
         BottomBarItem(Routes.History, "Histórico", Icons.Rounded.History),
         BottomBarItem(Routes.Settings, "Config.", Icons.Rounded.Settings),
     )
@@ -74,7 +78,7 @@ fun RemediosApp(
     RemediosTheme(settings = settings) {
         Scaffold(
             bottomBar = {
-                if (currentRoute in setOf(Routes.Today, Routes.History, Routes.Settings)) {
+                if (currentRoute in setOf(Routes.Today, Routes.Medications, Routes.AddMedication, Routes.History, Routes.Settings)) {
                     PillBottomNavigation(
                         items = bottomItems,
                         selectedRoute = currentRoute.orEmpty(),
@@ -147,10 +151,10 @@ fun RemediosApp(
                         val medications by viewModel.medications.collectAsStateWithLifecycle()
                         MedicationListScreen(
                             medications = medications,
-                            onAddMedication = { navController.navigate(Routes.AddMedication) },
                             onMedicationClick = { medication ->
                                 navController.navigate(Routes.medicationDetail(medication.id))
                             },
+                            onDeleteMedication = { medication -> viewModel.deleteMedication(medication.id) },
                         )
                     }
                     composable(Routes.AddMedication) {

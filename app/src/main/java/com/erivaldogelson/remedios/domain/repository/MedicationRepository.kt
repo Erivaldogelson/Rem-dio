@@ -19,6 +19,7 @@ interface MedicationRepository {
     fun observeActiveReminder(): Flow<ActiveReminderSnapshot?>
     suspend fun seedIfEmpty()
     suspend fun upsertMedication(draft: MedicationDraft): Long
+    suspend fun deleteMedication(id: Long)
     suspend fun recordDoseAction(
         medicationId: Long,
         scheduleId: Long?,

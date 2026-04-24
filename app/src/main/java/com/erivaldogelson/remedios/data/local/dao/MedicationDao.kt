@@ -35,6 +35,9 @@ interface MedicationDao {
     @Update
     suspend fun updateMedication(entity: MedicationEntity)
 
+    @Query("DELETE FROM medications WHERE id = :medicationId")
+    suspend fun deleteMedicationById(medicationId: Long)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSchedules(schedules: List<DoseScheduleEntity>)
 
@@ -46,6 +49,21 @@ interface MedicationDao {
 
     @Query("DELETE FROM medication_images WHERE medicationId = :medicationId")
     suspend fun deleteImagesForMedication(medicationId: Long)
+
+    @Query("DELETE FROM dose_logs WHERE medicationId = :medicationId")
+    suspend fun deleteDoseLogsForMedication(medicationId: Long)
+
+    @Query("DELETE FROM reminders WHERE medicationId = :medicationId")
+    suspend fun deleteRemindersForMedication(medicationId: Long)
+
+    @Transaction
+    suspend fun deleteMedicationWithData(medicationId: Long) {
+        deleteDoseLogsForMedication(medicationId)
+        deleteRemindersForMedication(medicationId)
+        deleteSchedulesForMedication(medicationId)
+        deleteImagesForMedication(medicationId)
+        deleteMedicationById(medicationId)
+    }
 
     @Query("SELECT COUNT(*) FROM medications")
     suspend fun count(): Int

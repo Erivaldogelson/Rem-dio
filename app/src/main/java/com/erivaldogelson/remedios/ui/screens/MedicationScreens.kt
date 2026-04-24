@@ -29,7 +29,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.EditNote
@@ -92,8 +91,8 @@ import java.util.concurrent.Executors
 @Composable
 fun MedicationListScreen(
     medications: List<MedicationSummary>,
-    onAddMedication: () -> Unit,
     onMedicationClick: (MedicationSummary) -> Unit,
+    onDeleteMedication: (MedicationSummary) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
@@ -118,17 +117,15 @@ fun MedicationListScreen(
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(medications) { medication ->
-                        MedicationCard(medication = medication, onClick = { onMedicationClick(medication) })
+                        MedicationCard(
+                            medication = medication,
+                            onClick = { onMedicationClick(medication) },
+                            onDelete = { onDeleteMedication(medication) },
+                        )
                     }
                     item { Spacer(Modifier.height(90.dp)) }
                 }
             }
-            AnimatedPrimaryActionButton(
-                text = "Adicionar medicamento",
-                onClick = onAddMedication,
-                icon = Icons.Rounded.Add,
-                modifier = Modifier.fillMaxWidth(),
-            )
         }
     }
 }
@@ -523,8 +520,8 @@ private fun MedicationListPreview() {
     RemediosTheme {
         MedicationListScreen(
             medications = PreviewData.medicationList,
-            onAddMedication = {},
             onMedicationClick = { _ -> },
+            onDeleteMedication = { _ -> },
         )
     }
 }

@@ -25,11 +25,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -177,6 +179,7 @@ fun MedicationCard(
     medication: MedicationSummary,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onDelete: (() -> Unit)? = null,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -235,6 +238,15 @@ fun MedicationCard(
                 background = Color(medication.accentColor).copy(alpha = 0.14f),
                 tint = Color(medication.accentColor),
             )
+            onDelete?.let { delete ->
+                IconButton(onClick = delete) {
+                    Icon(
+                        imageVector = Icons.Rounded.Delete,
+                        contentDescription = "Apagar remédio salvo",
+                        tint = Danger,
+                    )
+                }
+            }
         }
     }
 }
