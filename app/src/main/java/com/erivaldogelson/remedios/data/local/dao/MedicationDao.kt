@@ -49,4 +49,70 @@ interface MedicationDao {
 
     @Query("SELECT COUNT(*) FROM medications")
     suspend fun count(): Int
+
+    @Transaction
+    suspend fun deleteBundledSampleMedicationData() {
+        deleteSampleDoseLogs()
+        deleteSampleReminders()
+        deleteSampleSchedules()
+        deleteSampleImages()
+        deleteSampleMedications()
+    }
+
+    @Query(
+        """
+        DELETE FROM dose_logs
+        WHERE medicationId IN (
+            SELECT id FROM medications
+            WHERE (name = 'Vitamina D3' AND manufacturer = 'NutriLab')
+               OR (name = 'Ibuprofeno' AND manufacturer = 'Saúde Farma')
+        )
+        """,
+    )
+    suspend fun deleteSampleDoseLogs()
+
+    @Query(
+        """
+        DELETE FROM reminders
+        WHERE medicationId IN (
+            SELECT id FROM medications
+            WHERE (name = 'Vitamina D3' AND manufacturer = 'NutriLab')
+               OR (name = 'Ibuprofeno' AND manufacturer = 'Saúde Farma')
+        )
+        """,
+    )
+    suspend fun deleteSampleReminders()
+
+    @Query(
+        """
+        DELETE FROM dose_schedules
+        WHERE medicationId IN (
+            SELECT id FROM medications
+            WHERE (name = 'Vitamina D3' AND manufacturer = 'NutriLab')
+               OR (name = 'Ibuprofeno' AND manufacturer = 'Saúde Farma')
+        )
+        """,
+    )
+    suspend fun deleteSampleSchedules()
+
+    @Query(
+        """
+        DELETE FROM medication_images
+        WHERE medicationId IN (
+            SELECT id FROM medications
+            WHERE (name = 'Vitamina D3' AND manufacturer = 'NutriLab')
+               OR (name = 'Ibuprofeno' AND manufacturer = 'Saúde Farma')
+        )
+        """,
+    )
+    suspend fun deleteSampleImages()
+
+    @Query(
+        """
+        DELETE FROM medications
+        WHERE (name = 'Vitamina D3' AND manufacturer = 'NutriLab')
+           OR (name = 'Ibuprofeno' AND manufacturer = 'Saúde Farma')
+        """,
+    )
+    suspend fun deleteSampleMedications()
 }

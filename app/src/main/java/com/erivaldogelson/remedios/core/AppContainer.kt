@@ -9,7 +9,7 @@ import com.erivaldogelson.remedios.data.repository.SettingsRepositoryImpl
 import com.erivaldogelson.remedios.domain.repository.MedicationRepository
 import com.erivaldogelson.remedios.domain.repository.SettingsRepository
 import com.erivaldogelson.remedios.media.MedicationImageManager
-import com.erivaldogelson.remedios.notifications.ReminderNotifier
+import com.erivaldogelson.remedios.notifications.MedicationLiveUpdateManager
 import com.erivaldogelson.remedios.notifications.ReminderScheduler
 import com.erivaldogelson.remedios.ocr.MedicationOcrParser
 import com.erivaldogelson.remedios.ocr.MedicationTextRecognizer
@@ -20,7 +20,7 @@ interface AppContainer {
     val settingsRepository: SettingsRepository
     val imageManager: MedicationImageManager
     val textRecognizer: MedicationTextRecognizer
-    val reminderNotifier: ReminderNotifier
+    val liveUpdateManager: MedicationLiveUpdateManager
     val reminderScheduler: ReminderScheduler
     suspend fun bootstrap()
 }
@@ -44,7 +44,9 @@ class DefaultAppContainer(
     override val textRecognizer: MedicationTextRecognizer by lazy {
         MedicationTextRecognizer(context, ocrParser)
     }
-    override val reminderNotifier: ReminderNotifier by lazy { ReminderNotifier(context) }
+    override val liveUpdateManager: MedicationLiveUpdateManager by lazy {
+        MedicationLiveUpdateManager(context)
+    }
     override val reminderScheduler: ReminderScheduler by lazy {
         ReminderScheduler(
             context = context,
@@ -69,11 +71,10 @@ class DefaultAppContainer(
     }
 
     override suspend fun bootstrap() {
-        reminderNotifier.ensureChannel()
+        liveUpdateManager.ensureChannel()
         medicationRepository.seedIfEmpty()
         medicationRepository.rescheduleReminders()
         reminderScheduler.scheduleAllExisting()
         reminderScheduler.enqueuePeriodicRefresh()
     }
 }
-

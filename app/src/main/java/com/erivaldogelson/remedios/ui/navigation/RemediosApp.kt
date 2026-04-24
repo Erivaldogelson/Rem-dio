@@ -126,15 +126,16 @@ fun RemediosApp(
                                 DashboardViewModel(
                                     medicationRepository = container.medicationRepository,
                                     reminderScheduler = container.reminderScheduler,
+                                    liveUpdateManager = container.liveUpdateManager,
                                 )
                             },
                         )
                         val state by viewModel.state.collectAsStateWithLifecycle()
                         DashboardScreen(
                             state = state,
-                            onTakeNow = { viewModel.takeNow(state.nextDose) },
-                            onSnooze = { viewModel.snooze(state.nextDose) },
-                            onSkip = { viewModel.skip(state.nextDose) },
+                            onTakeNow = { viewModel.takeNow(state) },
+                            onSnooze = { viewModel.snooze(state) },
+                            onSkip = { viewModel.skip(state) },
                             onOpenMedications = { navController.navigate(Routes.Medications) },
                             onOpenActiveReminder = { navController.navigate(Routes.ActiveReminder) },
                         )
@@ -226,15 +227,16 @@ fun RemediosApp(
                                 DashboardViewModel(
                                     medicationRepository = container.medicationRepository,
                                     reminderScheduler = container.reminderScheduler,
+                                    liveUpdateManager = container.liveUpdateManager,
                                 )
                             },
                         )
                         val state by viewModel.state.collectAsStateWithLifecycle()
                         ActiveReminderScreen(
                             activeReminder = state.activeReminder,
-                            onTakeNow = { viewModel.takeNow(state.nextDose) },
-                            onSnooze = { viewModel.snooze(state.nextDose) },
-                            onSkip = { viewModel.skip(state.nextDose) },
+                            onTakeNow = { viewModel.takeNow(state) },
+                            onSnooze = { viewModel.snooze(state) },
+                            onSkip = { viewModel.skip(state) },
                             onBack = { navController.popBackStack() },
                         )
                     }

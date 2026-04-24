@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -52,6 +53,7 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .statusBarsPadding()
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
@@ -73,28 +75,30 @@ fun DashboardScreen(
                     .padding(horizontal = 10.dp),
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (state.nextDose != null || state.activeReminder != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    AnimatedPrimaryActionButton(
+                        text = "Tomar dose",
+                        onClick = onTakeNow,
+                        icon = Icons.Rounded.LocalHospital,
+                        modifier = Modifier.weight(1f),
+                    )
+                    AnimatedPrimaryActionButton(
+                        text = "Adiar",
+                        onClick = onSnooze,
+                        icon = Icons.Rounded.HourglassTop,
+                        modifier = Modifier.weight(1f),
+                        containerColor = Warning,
+                    )
+                }
                 AnimatedPrimaryActionButton(
-                    text = "Tomar agora",
-                    onClick = onTakeNow,
-                    icon = Icons.Rounded.LocalHospital,
-                    modifier = Modifier.weight(1f),
-                )
-                AnimatedPrimaryActionButton(
-                    text = "Adiar",
-                    onClick = onSnooze,
-                    icon = Icons.Rounded.HourglassTop,
-                    modifier = Modifier.weight(1f),
-                    containerColor = Warning,
+                    text = "Ignorar",
+                    onClick = onSkip,
+                    icon = Icons.Rounded.AlarmOn,
+                    modifier = Modifier.fillMaxWidth(),
+                    containerColor = Mist.copy(alpha = 0.88f),
                 )
             }
-            AnimatedPrimaryActionButton(
-                text = "Pular dose",
-                onClick = onSkip,
-                icon = Icons.Rounded.AlarmOn,
-                modifier = Modifier.fillMaxWidth(),
-                containerColor = Mist.copy(alpha = 0.88f),
-            )
 
             state.nextDose?.let { nextDose ->
                 Card(

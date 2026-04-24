@@ -4,40 +4,48 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.erivaldogelson.remedios.core.appContainer
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 class ReminderAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val medicationId = intent.getLongExtra(ReminderNotifier.EXTRA_MEDICATION_ID, -1L)
-        if (medicationId < 0) return
-
-        val notificationId = intent.getIntExtra(ReminderNotifier.EXTRA_NOTIFICATION_ID, medicationId.toInt())
-        val triggerAt = LocalDateTime.ofInstant(
-            Instant.ofEpochMilli(intent.getLongExtra(ReminderScheduler.EXTRA_TRIGGER_AT, System.currentTimeMillis())),
-            ZoneId.systemDefault(),
-        )
-        val name = intent.getStringExtra(ReminderScheduler.EXTRA_MEDICATION_NAME).orEmpty()
-        val dosage = intent.getStringExtra(ReminderScheduler.EXTRA_DOSAGE).orEmpty()
-        val scheduleId = intent.getLongExtra(ReminderNotifier.EXTRA_SCHEDULE_ID, Long.MIN_VALUE)
-            .takeIf { it != Long.MIN_VALUE }
+        val payload = intent.getDoseLiveUpdatePayload() ?: return
+        val event = intent.getStringExtra(ReminderScheduler.EXTRA_EVENT) ?: ReminderScheduler.EVENT_DUE
 
         runBlocking {
-            context.appContainer.reminderNotifier.showReminderNotification(
-                ReminderNotificationPayload(
-                    medicationId = medicationId,
-                    scheduleId = scheduleId,
-                    medicationName = name,
-                    dosage = dosage,
-                    triggerAt = triggerAt,
-                    notificationId = notificationId,
-                    promotedOngoing = true,
-                    progressPercent = 0,
-                ),
-            )
+            val container = context.appContainer
+            val liveUpdatesEnabled = container.settingsRepository.settings.first().liveUpdatesEnabled
+            when (event) {
+                ReminderScheduler.EVENT_LIVE_START -> {
+                    if (liveUpdatesEnabled) {
+                        container.liveUpdateManager.startDoseLiveUpdate(payload)
+                        container.reminderScheduler.scheduleLiveUpdateProgressTick(payload)
+                    }
+                }
+                ReminderScheduler.EVENT_PROGRESS_TICK -> {
+                    if (liveUpdatesEnabled) {
+                        container.liveUpdateManager.updateDoseLiveUpdateProgress(payload)
+                        container.reminderScheduler.scheduleLiveUpdateProgressTick(payload)
+                    }
+                }
+                ReminderScheduler.EVENT_DUE -> {
+                    container.medicationRepository.activateReminder(
+                        medicationId = payload.medicationId,
+                        scheduleId = payload.scheduleId,
+                        triggerAt = payload.triggerAt,
+                    )
+                    container.liveUpdateManager.startDoseLiveUpdate(payload)
+                }
+                ReminderScheduler.EVENT_EXPIRE -> {
+                    container.medicationRepository.expireReminder(
+                        medicationId = payload.medicationId,
+                        scheduleId = payload.scheduleId,
+                        triggerAt = payload.triggerAt,
+                    )
+                    container.liveUpdateManager.cancelDoseLiveUpdate(payload)
+                    container.reminderScheduler.scheduleAllExisting()
+                }
+            }
         }
     }
 }
-

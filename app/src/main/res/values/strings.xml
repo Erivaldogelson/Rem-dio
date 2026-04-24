@@ -2,10 +2,9 @@
     <string name="app_name">Remédios</string>
     <string name="notification_channel_name">Lembretes de medicação</string>
     <string name="notification_channel_description">Alertas para próximas doses, lembretes ativos e atualizações ao vivo.</string>
-    <string name="action_take_now">Tomar agora</string>
+    <string name="action_take_now">Tomar dose</string>
     <string name="action_snooze">Adiar</string>
-    <string name="action_skip">Pular dose</string>
+    <string name="action_skip">Ignorar</string>
     <string name="camera_permission_rationale">A câmera ajuda a fotografar e escanear a embalagem do remédio.</string>
     <string name="notification_permission_rationale">As notificações mantêm seus lembretes ativos e visíveis no momento certo.</string>
 </resources>
-

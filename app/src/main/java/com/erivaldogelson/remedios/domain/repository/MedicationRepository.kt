@@ -23,8 +23,18 @@ interface MedicationRepository {
         medicationId: Long,
         scheduleId: Long?,
         action: ReminderAction,
-        at: LocalDateTime = LocalDateTime.now(),
+        scheduledAt: LocalDateTime = LocalDateTime.now(),
+        actedAt: LocalDateTime = LocalDateTime.now(),
+    )
+    suspend fun activateReminder(
+        medicationId: Long,
+        scheduleId: Long?,
+        triggerAt: LocalDateTime,
+    )
+    suspend fun expireReminder(
+        medicationId: Long,
+        scheduleId: Long?,
+        triggerAt: LocalDateTime,
     )
     suspend fun rescheduleReminders()
 }
-

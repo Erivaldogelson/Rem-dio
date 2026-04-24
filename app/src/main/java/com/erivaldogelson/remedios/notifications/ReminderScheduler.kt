@@ -23,30 +23,44 @@ class ReminderScheduler(
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
     suspend fun scheduleAllExisting() {
+        val now = LocalDateTime.now()
         reminderDao.getAll().forEach { reminder ->
             val medication = medicationDao.getMedicationById(reminder.medicationId) ?: return@forEach
-            val requestCode = reminder.requestCode()
-            val intent = Intent(context, ReminderAlarmReceiver::class.java).apply {
-                putExtra(ReminderNotifier.EXTRA_MEDICATION_ID, reminder.medicationId)
-                putExtra(ReminderNotifier.EXTRA_SCHEDULE_ID, reminder.scheduleId)
-                putExtra(ReminderNotifier.EXTRA_NOTIFICATION_ID, requestCode)
-                putExtra(EXTRA_MEDICATION_NAME, medication.name)
-                putExtra(EXTRA_DOSAGE, medication.dosage)
-                putExtra(EXTRA_TRIGGER_AT, reminder.triggerAt.toEpochMillis())
-            }
-            val pendingIntent = PendingIntent.getBroadcast(
-                context,
-                requestCode,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            val payload = DoseLiveUpdatePayload(
+                medicationId = reminder.medicationId,
+                scheduleId = reminder.scheduleId,
+                medicationName = medication.name,
+                dosage = medication.dosage,
+                triggerAt = reminder.triggerAt,
+                expiresAt = reminder.expiresAt,
             )
-            val triggerAt = reminder.triggerAt.toEpochMillis()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
-            } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+            if (reminder.expiresAt > now) {
+                val liveStartAt = reminder.triggerAt.minusMinutes(LIVE_UPDATE_START_WINDOW_MINUTES.toLong())
+                if (reminder.triggerAt > now) {
+                    scheduleReminderAlarm(
+                        payload = payload,
+                        event = EVENT_LIVE_START,
+                        fireAt = if (liveStartAt.isBefore(now)) now.plusSeconds(2) else liveStartAt,
+                    )
+                }
+                scheduleReminderAlarm(
+                    payload = payload,
+                    event = EVENT_DUE,
+                    fireAt = if (reminder.triggerAt.isBefore(now)) now.plusSeconds(2) else reminder.triggerAt,
+                )
+                scheduleReminderAlarm(payload, EVENT_EXPIRE, reminder.expiresAt)
             }
         }
+    }
+
+    fun scheduleLiveUpdateProgressTick(payload: DoseLiveUpdatePayload) {
+        val now = LocalDateTime.now()
+        if (!now.isBefore(payload.triggerAt)) return
+        scheduleReminderAlarm(
+            payload = payload,
+            event = EVENT_PROGRESS_TICK,
+            fireAt = now.plusMinutes(1),
+        )
     }
 
     fun enqueuePeriodicRefresh() {
@@ -62,14 +76,38 @@ class ReminderScheduler(
 
     companion object {
         const val REMINDER_SYNC_WORK = "reminder_sync"
-        const val EXTRA_MEDICATION_NAME = "extra_medication_name"
-        const val EXTRA_DOSAGE = "extra_dosage"
-        const val EXTRA_TRIGGER_AT = "extra_trigger_at"
+        const val EXTRA_EVENT = "extra_event"
+        const val EVENT_LIVE_START = "event_live_start"
+        const val EVENT_PROGRESS_TICK = "event_progress_tick"
+        const val EVENT_DUE = "event_due"
+        const val EVENT_EXPIRE = "event_expire"
+        private const val LIVE_UPDATE_START_WINDOW_MINUTES = 15
+    }
+
+    private fun scheduleReminderAlarm(
+        payload: DoseLiveUpdatePayload,
+        event: String,
+        fireAt: LocalDateTime,
+    ) {
+        val requestCode = "${payload.notificationId}:$event:${fireAt}".hashCode()
+        val intent = Intent(context, ReminderAlarmReceiver::class.java).apply {
+            putExtra(EXTRA_EVENT, event)
+            putDoseLiveUpdatePayload(payload)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val triggerAt = fireAt.toEpochMillis()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager.canScheduleExactAlarms()) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+        } else {
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+        }
     }
 }
-
-private fun ReminderEntity.requestCode(): Int =
-    (medicationId.toString() + triggerAt.toString()).hashCode()
 
 private fun LocalDateTime.toEpochMillis(): Long =
     atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()

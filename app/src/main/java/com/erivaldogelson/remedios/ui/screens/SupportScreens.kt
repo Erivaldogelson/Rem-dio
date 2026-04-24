@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -17,7 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,6 +61,7 @@ fun HistoryScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -106,6 +107,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .statusBarsPadding()
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -149,20 +151,10 @@ fun SettingsScreen(
                 trailing = { Switch(checked = settings.hapticsEnabled, onCheckedChange = onHapticsChange) },
             )
             RoundedSettingsCard(
-                title = "Idioma",
-                subtitle = "Preparado para português, com estrutura simples para expansão futura.",
-                trailing = { Icon(Icons.Rounded.Palette, contentDescription = null, tint = Mist) },
-            )
-            RoundedSettingsCard(
-                title = "Backup e restauração",
-                subtitle = "Base pronta via Auto Backup e Room para evoluir a restauração manual.",
-                trailing = { Icon(Icons.Rounded.Shield, contentDescription = null, tint = Mist) },
-            )
-            RoundedSettingsCard(
                 title = "Permissões",
                 subtitle = "Câmera, notificações e alarmes exatos.",
                 trailing = { Icon(Icons.Rounded.Notifications, contentDescription = null, tint = Mist) },
-                modifier = Modifier,
+                onClick = onOpenPermissions,
             )
             AnimatedPrimaryActionButton(
                 text = "Gerenciar permissões",

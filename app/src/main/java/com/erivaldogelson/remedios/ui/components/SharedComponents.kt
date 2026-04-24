@@ -347,12 +347,9 @@ fun RoundedSettingsCard(
     subtitle: String,
     trailing: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = InkCard),
-        shape = RoundedCornerShape(28.dp),
-    ) {
+    val cardContent: @Composable () -> Unit = {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -367,6 +364,24 @@ fun RoundedSettingsCard(
             }
             Spacer(Modifier.width(12.dp))
             trailing()
+        }
+    }
+    if (onClick == null) {
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = InkCard),
+            shape = RoundedCornerShape(28.dp),
+        ) {
+            cardContent()
+        }
+    } else {
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            onClick = onClick,
+            colors = CardDefaults.cardColors(containerColor = InkCard),
+            shape = RoundedCornerShape(28.dp),
+        ) {
+            cardContent()
         }
     }
 }

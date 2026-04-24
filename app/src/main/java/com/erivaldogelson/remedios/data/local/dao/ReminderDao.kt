@@ -32,4 +32,26 @@ interface ReminderDao {
 
     @Query("UPDATE reminders SET isActive = 0 WHERE isActive = 1")
     suspend fun deactivateActiveReminders()
+
+    @Query(
+        """
+        UPDATE reminders
+        SET isActive = 1
+        WHERE medicationId = :medicationId
+          AND ((:scheduleId IS NULL AND scheduleId IS NULL) OR scheduleId = :scheduleId)
+          AND triggerAt = :triggerAt
+        """,
+    )
+    suspend fun activateReminder(medicationId: Long, scheduleId: Long?, triggerAt: java.time.LocalDateTime)
+
+    @Query(
+        """
+        UPDATE reminders
+        SET isActive = 0
+        WHERE medicationId = :medicationId
+          AND ((:scheduleId IS NULL AND scheduleId IS NULL) OR scheduleId = :scheduleId)
+          AND triggerAt = :triggerAt
+        """,
+    )
+    suspend fun deactivateReminder(medicationId: Long, scheduleId: Long?, triggerAt: java.time.LocalDateTime)
 }

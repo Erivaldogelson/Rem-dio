@@ -9,28 +9,24 @@ import kotlinx.coroutines.runBlocking
 
 class ReminderActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val medicationId = intent.getLongExtra(ReminderNotifier.EXTRA_MEDICATION_ID, -1L)
-        if (medicationId < 0) return
+        val payload = intent.getDoseLiveUpdatePayload() ?: return
 
         val action = when (intent.action) {
-            ReminderNotifier.ACTION_TAKE -> ReminderAction.TAKE
-            ReminderNotifier.ACTION_SNOOZE -> ReminderAction.SNOOZE
-            ReminderNotifier.ACTION_SKIP -> ReminderAction.SKIP
+            MedicationLiveUpdateManager.ACTION_TAKE -> ReminderAction.TAKE
+            MedicationLiveUpdateManager.ACTION_SNOOZE -> ReminderAction.SNOOZE
+            MedicationLiveUpdateManager.ACTION_SKIP -> ReminderAction.SKIP
             else -> return
         }
-        val scheduleId = intent.getLongExtra(ReminderNotifier.EXTRA_SCHEDULE_ID, Long.MIN_VALUE)
-            .takeIf { it != Long.MIN_VALUE }
-        val notificationId = intent.getIntExtra(ReminderNotifier.EXTRA_NOTIFICATION_ID, medicationId.toInt())
 
         runBlocking {
             context.appContainer.medicationRepository.recordDoseAction(
-                medicationId = medicationId,
-                scheduleId = scheduleId,
+                medicationId = payload.medicationId,
+                scheduleId = payload.scheduleId,
                 action = action,
+                scheduledAt = payload.triggerAt,
             )
             context.appContainer.reminderScheduler.scheduleAllExisting()
         }
-        context.appContainer.reminderNotifier.cancelNotification(notificationId)
+        context.appContainer.liveUpdateManager.completeDoseLiveUpdate(payload)
     }
 }
-

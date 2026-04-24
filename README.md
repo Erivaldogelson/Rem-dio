@@ -2,7 +2,7 @@
 
 Aplicativo Android nativo para gestão de medicamentos com foco em lembretes confiáveis, registo de doses, OCR pela câmera e uma interface premium em Jetpack Compose.
 
-Versão atual: `0.1.0`
+Versão atual: `0.1.1`
 
 ## O que já está pronto no MVP
 
@@ -99,8 +99,8 @@ Fluxo configurado:
 Exemplo:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 ## Live Updates / Now Bar

@@ -163,81 +163,7 @@ class MedicationRepositoryImpl(
     }
 
     override suspend fun seedIfEmpty() {
-        if (medicationDao.count() > 0) return
-
-        val now = LocalDateTime.now(clock)
-        val vitaminId = medicationDao.insertMedication(
-            MedicationEntity(
-                name = "Vitamina D3",
-                dosage = "1 cápsula",
-                form = MedicationForm.CAPSULE,
-                frequencyLabel = "Todos os dias",
-                startDate = LocalDate.now(clock),
-                endDate = null,
-                instructions = "Tomar após o café da manhã.",
-                notes = "Levar na bolsa nos dias úteis.",
-                quantityRemaining = 27,
-                accentColor = 0xFFB096FF,
-                iconEmoji = "🟣",
-                manufacturer = "NutriLab",
-                createdAt = now,
-                updatedAt = now,
-            ),
-        )
-        medicationDao.insertSchedules(
-            listOf(
-                DoseScheduleEntity(medicationId = vitaminId, time = LocalTime.of(8, 0)),
-                DoseScheduleEntity(medicationId = vitaminId, time = LocalTime.of(20, 0)),
-            ),
-        )
-
-        val syrupId = medicationDao.insertMedication(
-            MedicationEntity(
-                name = "Ibuprofeno",
-                dosage = "10 ml",
-                form = MedicationForm.SYRUP,
-                frequencyLabel = "A cada 8 horas",
-                startDate = LocalDate.now(clock),
-                endDate = LocalDate.now(clock).plusDays(5),
-                instructions = "Agitar antes de usar.",
-                notes = "Tomar com água e registrar sintomas.",
-                quantityRemaining = 1,
-                accentColor = 0xFF8B71F6,
-                iconEmoji = "🧴",
-                manufacturer = "Saúde Farma",
-                createdAt = now,
-                updatedAt = now,
-            ),
-        )
-        medicationDao.insertSchedules(
-            listOf(
-                DoseScheduleEntity(medicationId = syrupId, time = LocalTime.of(6, 30)),
-                DoseScheduleEntity(medicationId = syrupId, time = LocalTime.of(14, 30)),
-                DoseScheduleEntity(medicationId = syrupId, time = LocalTime.of(22, 30)),
-            ),
-        )
-
-        doseLogDao.insertLog(
-            DoseLogEntity(
-                medicationId = vitaminId,
-                scheduleId = null,
-                scheduledAt = now.minusHours(12),
-                actualAt = now.minusHours(11).minusMinutes(54),
-                status = DoseStatus.TAKEN,
-                note = "Tomado com café.",
-            ),
-        )
-        doseLogDao.insertLog(
-            DoseLogEntity(
-                medicationId = syrupId,
-                scheduleId = null,
-                scheduledAt = now.minusHours(6),
-                actualAt = null,
-                status = DoseStatus.MISSED,
-                note = "Esquecido durante a tarde.",
-            ),
-        )
-        rescheduleReminders()
+        medicationDao.deleteBundledSampleMedicationData()
     }
 
     override suspend fun upsertMedication(draft: MedicationDraft): Long {
@@ -299,15 +225,16 @@ class MedicationRepositoryImpl(
         medicationId: Long,
         scheduleId: Long?,
         action: ReminderAction,
-        at: LocalDateTime,
+        scheduledAt: LocalDateTime,
+        actedAt: LocalDateTime,
     ) {
         val medication = medicationDao.getMedicationById(medicationId) ?: return
         val updatedMedication = when (action) {
             ReminderAction.TAKE -> medication.copy(
                 quantityRemaining = (medication.quantityRemaining - 1).coerceAtLeast(0),
-                updatedAt = at,
+                updatedAt = actedAt,
             )
-            else -> medication.copy(updatedAt = at)
+            else -> medication.copy(updatedAt = actedAt)
         }
         medicationDao.updateMedication(updatedMedication)
 
@@ -315,8 +242,8 @@ class MedicationRepositoryImpl(
             DoseLogEntity(
                 medicationId = medicationId,
                 scheduleId = scheduleId,
-                scheduledAt = at,
-                actualAt = if (action == ReminderAction.TAKE) at else null,
+                scheduledAt = scheduledAt,
+                actualAt = if (action == ReminderAction.TAKE) actedAt else null,
                 status = when (action) {
                     ReminderAction.TAKE -> DoseStatus.TAKEN
                     ReminderAction.SNOOZE -> DoseStatus.SNOOZED
@@ -335,17 +262,34 @@ class MedicationRepositoryImpl(
             val snoozedReminder = ReminderEntity(
                 medicationId = medicationId,
                 scheduleId = scheduleId,
-                triggerAt = at.plusMinutes(15),
-                expiresAt = at.plusMinutes(60),
+                triggerAt = actedAt.plusMinutes(15),
+                expiresAt = actedAt.plusMinutes(60),
                 isActive = false,
                 action = ReminderAction.SNOOZE,
             )
-            val reminders = buildReminderEntities(now = at, extraReminder = snoozedReminder)
+            val reminders = buildReminderEntities(now = actedAt, extraReminder = snoozedReminder)
             reminderDao.clearAll()
             reminderDao.insertAll(reminders)
         } else {
             rescheduleReminders()
         }
+    }
+
+    override suspend fun activateReminder(
+        medicationId: Long,
+        scheduleId: Long?,
+        triggerAt: LocalDateTime,
+    ) {
+        reminderDao.activateReminder(medicationId, scheduleId, triggerAt)
+    }
+
+    override suspend fun expireReminder(
+        medicationId: Long,
+        scheduleId: Long?,
+        triggerAt: LocalDateTime,
+    ) {
+        reminderDao.deactivateReminder(medicationId, scheduleId, triggerAt)
+        rescheduleReminders()
     }
 
     override suspend fun rescheduleReminders() {
