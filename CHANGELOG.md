@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.11 - 2026-04-24
+
+- corrige o onboarding aparecendo novamente ao abrir o app aguardando as configurações reais antes de decidir a rota inicial
+- garante que a conclusão do onboarding seja salva antes de navegar para a tela principal
+- reposiciona o título "Bem-vindo ao Remédios" mais abaixo para não ficar apertado sob a Nowbar/status bar
+
 ## 0.1.10 - 2026-04-24
 
 - remove a recriação automática da Activity ao selecionar idioma para eliminar o pisca-pisca

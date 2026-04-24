@@ -114,9 +114,10 @@ fun RemediosApp(
                 ) {
                     composable(Routes.Splash) {
                         SplashScreen(
+                            settingsReady = loadedSettings != null,
                             onFinished = {
                                 navController.navigate(
-                                    if (settings.onboardingCompleted) Routes.Today else Routes.Onboarding,
+                                    if (loadedSettings?.onboardingCompleted == true) Routes.Today else Routes.Onboarding,
                                 ) {
                                     popUpTo(Routes.Splash) { inclusive = true }
                                 }
@@ -129,9 +130,10 @@ fun RemediosApp(
                         )
                         OnboardingScreen(
                             onContinue = {
-                                viewModel.completeOnboarding()
-                                navController.navigate(Routes.Today) {
-                                    popUpTo(Routes.Onboarding) { inclusive = true }
+                                viewModel.completeOnboarding {
+                                    navController.navigate(Routes.Today) {
+                                        popUpTo(Routes.Onboarding) { inclusive = true }
+                                    }
                                 }
                             },
                         )

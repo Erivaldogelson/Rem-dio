@@ -8,8 +8,8 @@ import kotlinx.coroutines.launch
 class OnboardingViewModel(
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
-    fun completeOnboarding() = viewModelScope.launch {
+    fun completeOnboarding(onCompleted: () -> Unit) = viewModelScope.launch {
         settingsRepository.completeOnboarding()
+        onCompleted()
     }
 }
-
