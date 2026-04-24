@@ -22,6 +22,7 @@ import com.erivaldogelson.remedios.domain.model.MedicationSummary
 import com.erivaldogelson.remedios.domain.model.NextDoseSnapshot
 import com.erivaldogelson.remedios.domain.model.ReminderAction
 import com.erivaldogelson.remedios.domain.repository.MedicationRepository
+import com.erivaldogelson.remedios.notifications.DoseLiveUpdatePayload
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -36,6 +37,8 @@ class MedicationRepositoryImpl(
     private val doseLogDao: DoseLogDao,
     private val reminderDao: ReminderDao,
     private val clock: Clock = Clock.systemDefaultZone(),
+    private val onCancelLiveUpdate: (Int) -> Unit = {},
+    private val onMedicationDataChanged: suspend () -> Unit = {},
 ) : MedicationRepository {
 
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -128,9 +131,22 @@ class MedicationRepositoryImpl(
         }
 
     override suspend fun deleteMedication(id: Long) {
+        val remindersToCancel = reminderDao.getByMedicationId(id)
         medicationDao.deleteMedicationWithData(id)
+        remindersToCancel.forEach { reminder ->
+            val notificationId = DoseLiveUpdatePayload.notificationId(
+                medicationId = reminder.medicationId,
+                scheduleId = reminder.scheduleId,
+                triggerAt = reminder.triggerAt,
+            )
+            onCancelLiveUpdate(notificationId)
+        }
         rescheduleReminders()
+        onMedicationDataChanged()
     }
+
+    override suspend fun medicationExists(id: Long): Boolean =
+        medicationDao.getMedicationById(id) != null
 
     override fun observeHistory(filter: HistoryFilter): Flow<List<DoseLogItemModel>> = combine(
         medicationDao.observeMedicationCards(),
@@ -223,6 +239,7 @@ class MedicationRepositoryImpl(
         }
 
         rescheduleReminders()
+        onMedicationDataChanged()
         return medicationId
     }
 
@@ -283,6 +300,7 @@ class MedicationRepositoryImpl(
         } else {
             rescheduleReminders()
         }
+        onMedicationDataChanged()
     }
 
     override suspend fun activateReminder(
@@ -291,6 +309,7 @@ class MedicationRepositoryImpl(
         triggerAt: LocalDateTime,
     ) {
         reminderDao.activateReminder(medicationId, scheduleId, triggerAt)
+        onMedicationDataChanged()
     }
 
     override suspend fun expireReminder(
@@ -300,6 +319,7 @@ class MedicationRepositoryImpl(
     ) {
         reminderDao.deactivateReminder(medicationId, scheduleId, triggerAt)
         rescheduleReminders()
+        onMedicationDataChanged()
     }
 
     override suspend fun rescheduleReminders() {

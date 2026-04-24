@@ -26,7 +26,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material3.Card
@@ -34,7 +33,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -68,6 +66,7 @@ import com.erivaldogelson.remedios.ui.components.DoseLogItem
 import com.erivaldogelson.remedios.ui.components.EmptyStateCard
 import com.erivaldogelson.remedios.ui.components.PremiumScaffoldBackground
 import com.erivaldogelson.remedios.ui.components.RoundedSettingsCard
+import com.erivaldogelson.remedios.ui.components.SystemBackButton
 import com.erivaldogelson.remedios.ui.theme.LocalRemediosHapticsEnabled
 import com.erivaldogelson.remedios.ui.theme.Mist
 import com.erivaldogelson.remedios.ui.theme.MistMuted
@@ -266,43 +265,13 @@ private fun SettingsSubpage(
                 .padding(horizontal = 24.dp, vertical = 22.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            CircularBackButton(onBack = onBack)
+            SystemBackButton(onBack = onBack)
             Spacer(Modifier.height(32.dp))
             Text(title, style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onBackground)
             Text(subtitle, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(18.dp))
             content()
             Spacer(Modifier.height(100.dp))
-        }
-    }
-}
-
-@Composable
-private fun CircularBackButton(
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val hapticFeedback = LocalHapticFeedback.current
-    val hapticsEnabled = LocalRemediosHapticsEnabled.current
-    Surface(
-        modifier = modifier
-            .size(64.dp)
-            .clickable {
-                if (hapticsEnabled) {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                }
-                onBack()
-            },
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = Icons.Rounded.ArrowBack,
-                contentDescription = "Voltar",
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
         }
     }
 }
@@ -542,7 +511,7 @@ fun PermissionsScreen(
                 TopAppBar(
                     title = { Text("Permissões") },
                     navigationIcon = {
-                        CircularBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
+                        SystemBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -601,7 +570,7 @@ fun ActiveReminderScreen(
                 TopAppBar(
                     title = { Text("Lembrete ativo") },
                     navigationIcon = {
-                        CircularBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
+                        SystemBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = androidx.compose.ui.graphics.Color.Transparent,

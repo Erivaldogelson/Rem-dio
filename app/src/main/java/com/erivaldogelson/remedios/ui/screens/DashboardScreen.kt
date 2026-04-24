@@ -1,6 +1,7 @@
 package com.erivaldogelson.remedios.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -49,11 +51,15 @@ fun DashboardScreen(
     modifier: Modifier = Modifier,
 ) {
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val nextDoseMaxWidth = if (maxWidth >= 720.dp) 360.dp else 440.dp
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .statusBarsPadding()
+                .widthIn(max = 920.dp)
+                .align(Alignment.TopCenter)
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
@@ -72,6 +78,8 @@ fun DashboardScreen(
                 nextDose = state.nextDose,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .widthIn(max = nextDoseMaxWidth)
+                    .align(Alignment.CenterHorizontally)
                     .padding(horizontal = 10.dp),
             )
 
@@ -171,6 +179,7 @@ fun DashboardScreen(
                 contentColor = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(90.dp))
+        }
         }
     }
 }

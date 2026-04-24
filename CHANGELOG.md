@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.6 - 2026-04-24
+
+- Now Bar / Live Updates agora só aparecem para remédios ainda salvos e são canceladas ao apagar um remédio
+- ícone do app ganhou camada monocromática para Material You / ícones temáticos sem distorcer a arte
+- adicionados widgets nativos 2x2 e 4x2 com suporte a modo claro e escuro
+- dashboard e navegação receberam limites responsivos para telas pequenas, tablets e dobráveis
+- botão de voltar foi padronizado no estilo circular Material em todas as telas internas
+- atualizações de progresso da Live Update ficaram menos frequentes e mais econômicas para reduzir consumo de bateria
+
 ## 0.1.5 - 2026-04-24
 
 - corrigido crash ao tocar em editar um remédio salvo

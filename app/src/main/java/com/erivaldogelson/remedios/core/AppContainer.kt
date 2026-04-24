@@ -13,6 +13,9 @@ import com.erivaldogelson.remedios.notifications.MedicationLiveUpdateManager
 import com.erivaldogelson.remedios.notifications.ReminderScheduler
 import com.erivaldogelson.remedios.ocr.MedicationOcrParser
 import com.erivaldogelson.remedios.ocr.MedicationTextRecognizer
+import com.erivaldogelson.remedios.widgets.MedicationWidgetProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.Clock
 
 interface AppContainer {
@@ -60,6 +63,12 @@ class DefaultAppContainer(
             doseLogDao = database.doseLogDao(),
             reminderDao = database.reminderDao(),
             clock = clock,
+            onCancelLiveUpdate = liveUpdateManager::cancelDoseLiveUpdate,
+            onMedicationDataChanged = {
+                withContext(Dispatchers.IO) {
+                    MedicationWidgetProvider.updateAll(context)
+                }
+            },
         )
     }
     override val settingsRepository: SettingsRepository by lazy {
@@ -76,5 +85,6 @@ class DefaultAppContainer(
         medicationRepository.rescheduleReminders()
         reminderScheduler.scheduleAllExisting()
         reminderScheduler.enqueuePeriodicRefresh()
+        MedicationWidgetProvider.updateAll(context)
     }
 }

@@ -19,13 +19,18 @@ class ReminderActionReceiver : BroadcastReceiver() {
         }
 
         runBlocking {
-            context.appContainer.medicationRepository.recordDoseAction(
+            val container = context.appContainer
+            if (!container.medicationRepository.medicationExists(payload.medicationId)) {
+                container.liveUpdateManager.cancelDoseLiveUpdate(payload)
+                return@runBlocking
+            }
+            container.medicationRepository.recordDoseAction(
                 medicationId = payload.medicationId,
                 scheduleId = payload.scheduleId,
                 action = action,
                 scheduledAt = payload.triggerAt,
             )
-            context.appContainer.reminderScheduler.scheduleAllExisting()
+            container.reminderScheduler.scheduleAllExisting()
         }
         context.appContainer.liveUpdateManager.completeDoseLiveUpdate(payload)
     }

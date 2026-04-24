@@ -21,6 +21,9 @@ interface ReminderDao {
     @Query("SELECT * FROM reminders ORDER BY triggerAt ASC")
     suspend fun getAll(): List<ReminderEntity>
 
+    @Query("SELECT * FROM reminders WHERE medicationId = :medicationId ORDER BY triggerAt ASC")
+    suspend fun getByMedicationId(medicationId: Long): List<ReminderEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(reminders: List<ReminderEntity>)
 

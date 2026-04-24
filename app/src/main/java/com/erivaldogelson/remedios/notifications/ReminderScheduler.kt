@@ -78,7 +78,8 @@ class ReminderScheduler(
         scheduleReminderAlarm(
             payload = payload,
             event = EVENT_PROGRESS_TICK,
-            fireAt = now.plusMinutes(1),
+            fireAt = now.plusMinutes(LIVE_UPDATE_PROGRESS_TICK_MINUTES.toLong()),
+            exact = false,
         )
     }
 
@@ -101,12 +102,14 @@ class ReminderScheduler(
         const val EVENT_DUE = "event_due"
         const val EVENT_EXPIRE = "event_expire"
         private const val LIVE_UPDATE_START_WINDOW_MINUTES = 15
+        private const val LIVE_UPDATE_PROGRESS_TICK_MINUTES = 5
     }
 
     private fun scheduleReminderAlarm(
         payload: DoseLiveUpdatePayload,
         event: String,
         fireAt: LocalDateTime,
+        exact: Boolean = true,
     ) {
         val requestCode = "${payload.notificationId}:$event:${fireAt}".hashCode()
         val intent = Intent(context, ReminderAlarmReceiver::class.java).apply {
@@ -120,10 +123,12 @@ class ReminderScheduler(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val triggerAt = fireAt.toEpochMillis()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager.canScheduleExactAlarms()) {
+        if (exact && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager.canScheduleExactAlarms()) {
             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
-        } else {
+        } else if (exact) {
             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+        } else {
+            alarmManager.setWindow(AlarmManager.RTC, triggerAt, TimeUnit.MINUTES.toMillis(2), pendingIntent)
         }
     }
 }

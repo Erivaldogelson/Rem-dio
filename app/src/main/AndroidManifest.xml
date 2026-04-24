@@ -54,6 +54,30 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".widgets.SmallMedicationWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_2x2_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_medication_2x2_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widgets.WideMedicationWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_4x2_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_medication_4x2_info" />
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -66,4 +90,3 @@
     </application>
 
 </manifest>
-

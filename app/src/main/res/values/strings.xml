@@ -7,4 +7,14 @@
     <string name="action_skip">Ignorar</string>
     <string name="camera_permission_rationale">A câmera ajuda a fotografar e escanear a embalagem do remédio.</string>
     <string name="notification_permission_rationale">As notificações mantêm seus lembretes ativos e visíveis no momento certo.</string>
+    <string name="widget_empty_title">Sem remédios salvos</string>
+    <string name="widget_empty_subtitle">Adicione um remédio para ver a próxima dose aqui.</string>
+    <string name="widget_empty_meta">Nada agendado</string>
+    <string name="widget_2x2_label">Remédios 2x2</string>
+    <string name="widget_4x2_label">Remédios 4x2</string>
+
+    <plurals name="widget_minutes_remaining">
+        <item quantity="one">em %1$d min</item>
+        <item quantity="other">em %1$d min</item>
+    </plurals>
 </resources>

@@ -68,7 +68,7 @@ class MedicationLiveUpdateManager(private val context: Context) {
 
     @RequiresApi(36)
     private fun buildAndroid16LiveUpdate(payload: DoseLiveUpdatePayload): Notification {
-        val accent = ContextCompat.getColor(context, R.color.notification_accent)
+        val accent = notificationAccentColor()
         val progress = payload.progressPercent()
         val icon = Icon.createWithResource(context, R.drawable.ic_notification)
         val style = Notification.ProgressStyle()
@@ -82,9 +82,10 @@ class MedicationLiveUpdateManager(private val context: Context) {
         return Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setColor(accent)
-            .setContentTitle("\uD83D\uDC8A ${payload.medicationName}")
-            .setContentText("Ativação do remédio: dose ${payload.dosage} às ${payload.timeLabel()}")
-            .setSubText("\uD83D\uDC8A Now Bar")
+            .setColorized(false)
+            .setContentTitle(payload.medicationName)
+            .setContentText("Dose ${payload.dosage} as ${payload.timeLabel()}")
+            .setSubText("Now Bar")
             .setContentIntent(buildContentIntent())
             .setPriority(Notification.PRIORITY_HIGH)
             .setCategory(Notification.CATEGORY_PROGRESS)
@@ -107,10 +108,11 @@ class MedicationLiveUpdateManager(private val context: Context) {
     private fun buildFallbackNotification(payload: DoseLiveUpdatePayload): Notification =
         NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setColor(ContextCompat.getColor(context, R.color.notification_accent))
-            .setContentTitle("\uD83D\uDC8A ${payload.medicationName}")
-            .setContentText("Ativação do remédio: dose ${payload.dosage} às ${payload.timeLabel()}")
-            .setSubText("\uD83D\uDC8A Live Update")
+            .setColor(notificationAccentColor())
+            .setColorized(false)
+            .setContentTitle(payload.medicationName)
+            .setContentText("Dose ${payload.dosage} as ${payload.timeLabel()}")
+            .setSubText("Live Update")
             .setContentIntent(buildContentIntent())
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
@@ -133,6 +135,13 @@ class MedicationLiveUpdateManager(private val context: Context) {
             .addAction(0, context.getString(R.string.action_snooze), actionPendingIntent(payload, ACTION_SNOOZE))
             .addAction(0, context.getString(R.string.action_skip), actionPendingIntent(payload, ACTION_SKIP))
             .build()
+
+    private fun notificationAccentColor(): Int =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            context.getColor(android.R.color.system_accent1_200)
+        } else {
+            ContextCompat.getColor(context, R.color.notification_accent)
+        }
 
     @RequiresApi(23)
     private fun buildPlatformAction(

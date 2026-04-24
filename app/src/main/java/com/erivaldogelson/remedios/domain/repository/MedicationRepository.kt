@@ -20,6 +20,7 @@ interface MedicationRepository {
     suspend fun seedIfEmpty()
     suspend fun upsertMedication(draft: MedicationDraft): Long
     suspend fun deleteMedication(id: Long)
+    suspend fun medicationExists(id: Long): Boolean
     suspend fun recordDoseAction(
         medicationId: Long,
         scheduleId: Long?,

@@ -14,6 +14,10 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
 
         runBlocking {
             val container = context.appContainer
+            if (!container.medicationRepository.medicationExists(payload.medicationId)) {
+                container.liveUpdateManager.cancelDoseLiveUpdate(payload)
+                return@runBlocking
+            }
             val liveUpdatesEnabled = container.settingsRepository.settings.first().liveUpdatesEnabled
             when (event) {
                 ReminderScheduler.EVENT_LIVE_START -> {

@@ -19,11 +19,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.EditNote
@@ -114,33 +116,67 @@ fun PremiumScaffoldBackground(
 }
 
 @Composable
+fun SystemBackButton(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val hapticFeedback = LocalHapticFeedback.current
+    val hapticsEnabled = LocalRemediosHapticsEnabled.current
+    Surface(
+        modifier = modifier.size(58.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        onClick = {
+            if (hapticsEnabled) {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+            }
+            onBack()
+        },
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                contentDescription = "Voltar",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(30.dp),
+            )
+        }
+    }
+}
+
+@Composable
 fun PillBottomNavigation(
     items: List<BottomBarItem>,
     selectedRoute: String,
     onSelect: (BottomBarItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.92f),
-        shape = RoundedCornerShape(36.dp),
-        tonalElevation = 8.dp,
-        shadowElevation = 16.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 680.dp)
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.92f),
+            shape = RoundedCornerShape(36.dp),
+            tonalElevation = 8.dp,
+            shadowElevation = 16.dp,
         ) {
-            items.forEach { item ->
-                val selected = item.route == selectedRoute
-                val itemWeight by animateFloatAsState(
-                    targetValue = if (selected) 2.2f else 1f,
-                    label = "pill_item_weight",
-                )
-                val weightModifier = Modifier.weight(itemWeight)
-                NavigationItem(weightModifier, item, selected) { onSelect(item) }
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                items.forEach { item ->
+                    val selected = item.route == selectedRoute
+                    val itemWeight by animateFloatAsState(
+                        targetValue = if (selected) 2.2f else 1f,
+                        label = "pill_item_weight",
+                    )
+                    val weightModifier = Modifier.weight(itemWeight)
+                    NavigationItem(weightModifier, item, selected) { onSelect(item) }
+                }
             }
         }
     }

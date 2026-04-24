@@ -29,7 +29,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.Image
@@ -44,7 +43,6 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -80,6 +78,7 @@ import com.erivaldogelson.remedios.ui.components.EmptyStateCard
 import com.erivaldogelson.remedios.ui.components.MedicationCard
 import com.erivaldogelson.remedios.ui.components.OcrResultConfirmationCard
 import com.erivaldogelson.remedios.ui.components.PremiumScaffoldBackground
+import com.erivaldogelson.remedios.ui.components.SystemBackButton
 import com.erivaldogelson.remedios.ui.theme.InkCard
 import com.erivaldogelson.remedios.ui.theme.Mist
 import com.erivaldogelson.remedios.ui.theme.MistMuted
@@ -170,9 +169,7 @@ fun AddMedicationScreen(
                 TopAppBar(
                     title = { Text(if (isEditing) "Editar medicamento" else "Adicionar medicamento") },
                     navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.Rounded.ArrowBack, contentDescription = "Voltar")
-                        }
+                        SystemBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -443,9 +440,7 @@ fun MedicationDetailScreen(
                 TopAppBar(
                     title = { Text(details?.name ?: "Detalhes") },
                     navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.Rounded.ArrowBack, contentDescription = "Voltar")
-                        }
+                        SystemBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -505,9 +500,7 @@ fun ScanMedicationScreen(
             TopAppBar(
                 title = { Text("Escanear remédio") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Voltar")
-                    }
+                    SystemBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = androidx.compose.ui.graphics.Color.Transparent,
