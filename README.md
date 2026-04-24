@@ -2,7 +2,7 @@
 
 Aplicativo Android nativo para gestão de medicamentos com foco em lembretes confiáveis, registo de doses, OCR pela câmera e uma interface premium em Jetpack Compose.
 
-Versão atual: `0.1.9`
+Versão atual: `0.1.10`
 
 ## O que já está pronto no MVP
 

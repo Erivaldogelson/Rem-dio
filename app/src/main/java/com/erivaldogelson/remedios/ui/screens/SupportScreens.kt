@@ -139,11 +139,12 @@ fun SettingsScreen(
 ) {
     var selectedSection by remember { mutableStateOf<SettingsSection?>(null) }
     var showLanguageSheet by remember { mutableStateOf(false) }
+    val text = settingsText(settings.languageTag)
 
     when (selectedSection) {
         SettingsSection.APPEARANCE -> SettingsSubpage(
-            title = "Aparência",
-            subtitle = "Configurações",
+            title = text.appearance,
+            subtitle = text.settings,
             onBack = { selectedSection = null },
             modifier = modifier,
         ) {
@@ -156,7 +157,7 @@ fun SettingsScreen(
         }
 
         SettingsSection.REMINDERS -> SettingsSubpage(
-            title = "Lembretes",
+            title = text.reminders,
             subtitle = "Now Bar, feedback e permissões",
             onBack = { selectedSection = null },
             modifier = modifier,
@@ -172,7 +173,7 @@ fun SettingsScreen(
         }
 
         SettingsSection.ABOUT -> SettingsSubpage(
-            title = "Sobre",
+            title = text.about,
             subtitle = "Remédios",
             onBack = { selectedSection = null },
             modifier = modifier,
@@ -186,6 +187,7 @@ fun SettingsScreen(
             onOpenAbout = { selectedSection = SettingsSection.ABOUT },
             onOpenLanguage = { showLanguageSheet = true },
             onOpenPermissions = onOpenPermissions,
+            languageTag = settings.languageTag,
             modifier = modifier,
         )
     }
@@ -193,6 +195,9 @@ fun SettingsScreen(
     if (showLanguageSheet) {
         LanguagePickerSheet(
             selectedLanguageTag = settings.languageTag,
+            title = text.chooseLanguage,
+            systemTitle = text.system,
+            systemSubtitle = text.useDeviceLanguage,
             onSelectLanguage = { tag ->
                 onLanguageChange(tag)
                 showLanguageSheet = false
@@ -215,8 +220,10 @@ private fun SettingsHome(
     onOpenAbout: () -> Unit,
     onOpenLanguage: () -> Unit,
     onOpenPermissions: () -> Unit,
+    languageTag: String,
     modifier: Modifier = Modifier,
 ) {
+    val text = settingsText(languageTag)
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -226,9 +233,9 @@ private fun SettingsHome(
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Configurações", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
+            Text(text.settings, style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
             Text(
-                "Menu organizado para aparência, lembretes, Now Bar e informações do app.",
+                text.settingsIntro,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -241,26 +248,26 @@ private fun SettingsHome(
             )
             SettingsMenuCard(
                 icon = "⏱",
-                title = "Lembretes",
+                title = text.reminders,
                 subtitle = "Live Updates, feedback tátil e permissões",
                 onClick = onOpenReminders,
             )
             SettingsMenuCard(
                 icon = "🎨",
-                title = "Aparência",
+                title = text.appearance,
                 subtitle = "Tema claro, escuro e cores dinâmicas",
                 onClick = onOpenAppearance,
             )
             SettingsMenuCard(
                 icon = "ℹ️",
-                title = "Sobre",
+                title = text.about,
                 subtitle = "Desenvolvedor e redes sociais",
                 onClick = onOpenAbout,
             )
             SettingsMenuCard(
                 icon = "🌐",
-                title = "Idioma",
-                subtitle = "Sistema, Português e todos os idiomas disponíveis",
+                title = text.language,
+                subtitle = languageSubtitle(languageTag),
                 onClick = onOpenLanguage,
             )
             AnimatedPrimaryActionButton(
@@ -490,12 +497,15 @@ private val nowBarColorOptions = listOf(
 @Composable
 private fun LanguagePickerSheet(
     selectedLanguageTag: String,
+    title: String,
+    systemTitle: String,
+    systemSubtitle: String,
     onSelectLanguage: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val languages = remember {
         buildList {
-            add(LanguageOption("system", "System", "Use device language"))
+            add(LanguageOption("system", systemTitle, systemSubtitle))
             addAll(
                 Locale.getAvailableLocales()
                     .filter { it.language.isNotBlank() && it.toLanguageTag().isNotBlank() }
@@ -519,7 +529,7 @@ private fun LanguagePickerSheet(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Choose language", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
+            Text(title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -571,10 +581,94 @@ private data class LanguageOption(
 
 private fun languageSubtitle(languageTag: String): String =
     if (languageTag == "system") {
-        "System"
+        settingsText(languageTag).system
     } else {
         Locale.forLanguageTag(languageTag).getDisplayName(Locale.forLanguageTag(languageTag))
     }
+
+private data class SettingsText(
+    val settings: String,
+    val settingsIntro: String,
+    val reminders: String,
+    val appearance: String,
+    val about: String,
+    val language: String,
+    val chooseLanguage: String,
+    val system: String,
+    val useDeviceLanguage: String,
+)
+
+private fun settingsText(languageTag: String): SettingsText {
+    val language = if (languageTag == "system") Locale.getDefault().language else Locale.forLanguageTag(languageTag).language
+    return when (language) {
+        "en" -> SettingsText(
+            settings = "Settings",
+            settingsIntro = "Organized menu for appearance, reminders, Now Bar, and app information.",
+            reminders = "Reminders",
+            appearance = "Appearance",
+            about = "About",
+            language = "Language",
+            chooseLanguage = "Choose language",
+            system = "System",
+            useDeviceLanguage = "Use device language",
+        )
+        "es" -> SettingsText(
+            settings = "Ajustes",
+            settingsIntro = "Menú organizado para apariencia, recordatorios, Now Bar e información de la app.",
+            reminders = "Recordatorios",
+            appearance = "Apariencia",
+            about = "Acerca de",
+            language = "Idioma",
+            chooseLanguage = "Elegir idioma",
+            system = "Sistema",
+            useDeviceLanguage = "Usar idioma del dispositivo",
+        )
+        "fr" -> SettingsText(
+            settings = "Réglages",
+            settingsIntro = "Menu organisé pour l'apparence, les rappels, la Now Bar et les informations de l'app.",
+            reminders = "Rappels",
+            appearance = "Apparence",
+            about = "À propos",
+            language = "Langue",
+            chooseLanguage = "Choisir la langue",
+            system = "Système",
+            useDeviceLanguage = "Utiliser la langue de l'appareil",
+        )
+        "de" -> SettingsText(
+            settings = "Einstellungen",
+            settingsIntro = "Menü für Darstellung, Erinnerungen, Now Bar und App-Informationen.",
+            reminders = "Erinnerungen",
+            appearance = "Darstellung",
+            about = "Info",
+            language = "Sprache",
+            chooseLanguage = "Sprache wählen",
+            system = "System",
+            useDeviceLanguage = "Gerätesprache verwenden",
+        )
+        "it" -> SettingsText(
+            settings = "Impostazioni",
+            settingsIntro = "Menu per aspetto, promemoria, Now Bar e informazioni dell'app.",
+            reminders = "Promemoria",
+            appearance = "Aspetto",
+            about = "Informazioni",
+            language = "Lingua",
+            chooseLanguage = "Scegli lingua",
+            system = "Sistema",
+            useDeviceLanguage = "Usa lingua del dispositivo",
+        )
+        else -> SettingsText(
+            settings = "Configurações",
+            settingsIntro = "Menu organizado para aparência, lembretes, Now Bar e informações do app.",
+            reminders = "Lembretes",
+            appearance = "Aparência",
+            about = "Sobre",
+            language = "Idioma",
+            chooseLanguage = "Escolha o idioma",
+            system = "Sistema",
+            useDeviceLanguage = "Usar idioma do dispositivo",
+        )
+    }
+}
 
 @Composable
 private fun AboutSettingsContent() {

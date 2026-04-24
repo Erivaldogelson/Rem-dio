@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10 - 2026-04-24
+
+- remove a recriação automática da Activity ao selecionar idioma para eliminar o pisca-pisca
+- faz o seletor de idioma atualizar textos principais em Compose sem reiniciar o app
+- repostagem imediata da Now Bar / Live Updates após mudar cor ou tonalidade
+
 ## 0.1.9 - 2026-04-24
 
 - corrige definitivamente o pisca-pisca ao trocar idioma aguardando o DataStore carregar antes de aplicar a localidade

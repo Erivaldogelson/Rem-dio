@@ -1,9 +1,7 @@
 package com.erivaldogelson.remedios.ui.navigation
 
 import android.Manifest
-import android.app.LocaleManager
 import android.os.Build
-import android.os.LocaleList
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,7 +21,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -60,7 +57,6 @@ import com.erivaldogelson.remedios.ui.viewmodel.MedicationListViewModel
 import com.erivaldogelson.remedios.ui.viewmodel.OnboardingViewModel
 import com.erivaldogelson.remedios.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.flow.first
-import java.util.Locale
 
 @Composable
 fun RemediosApp(
@@ -70,21 +66,17 @@ fun RemediosApp(
         initialValue = null,
     )
     val settings = loadedSettings ?: SettingsSnapshot()
-    val context = LocalContext.current
     val navController = rememberNavController()
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
+    val labels = navLabels(settings.languageTag)
     val bottomItems = listOf(
-        BottomBarItem(Routes.Today, "Hoje", Icons.Rounded.Today),
-        BottomBarItem(Routes.Medications, "Remédios", Icons.Rounded.Medication),
-        BottomBarItem(Routes.AddMedication, "Novo", Icons.Rounded.Add),
-        BottomBarItem(Routes.History, "Histórico", Icons.Rounded.History),
-        BottomBarItem(Routes.Settings, "Config.", Icons.Rounded.Settings),
+        BottomBarItem(Routes.Today, labels.today, Icons.Rounded.Today),
+        BottomBarItem(Routes.Medications, labels.medications, Icons.Rounded.Medication),
+        BottomBarItem(Routes.AddMedication, labels.newItem, Icons.Rounded.Add),
+        BottomBarItem(Routes.History, labels.history, Icons.Rounded.History),
+        BottomBarItem(Routes.Settings, labels.settings, Icons.Rounded.Settings),
     )
-
-    LaunchedEffect(loadedSettings?.languageTag) {
-        loadedSettings?.let { applyAppLanguage(context, it.languageTag) }
-    }
 
     RemediosTheme(settings = settings) {
         Scaffold(
@@ -243,7 +235,13 @@ fun RemediosApp(
                     }
                     composable(Routes.Settings) {
                         val viewModel: SettingsViewModel = viewModel(
-                            factory = AppViewModelFactory { SettingsViewModel(container.settingsRepository) },
+                            factory = AppViewModelFactory {
+                                SettingsViewModel(
+                                    settingsRepository = container.settingsRepository,
+                                    medicationRepository = container.medicationRepository,
+                                    liveUpdateManager = container.liveUpdateManager,
+                                )
+                            },
                         )
                         val state by viewModel.settings.collectAsStateWithLifecycle()
                         SettingsScreen(
@@ -288,21 +286,32 @@ fun RemediosApp(
     }
 }
 
-private fun applyAppLanguage(context: android.content.Context, languageTag: String) {
-    val tag = languageTag.takeUnless { it == "system" }.orEmpty()
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val localeManager = context.getSystemService(LocaleManager::class.java)
-        if (localeManager.applicationLocales.toLanguageTags() != tag) {
-            localeManager.applicationLocales = LocaleList.forLanguageTags(tag)
-        }
-    }
-    if (tag.isNotBlank()) {
-        val locale = Locale.forLanguageTag(tag)
-        if (Locale.getDefault().toLanguageTag() != locale.toLanguageTag()) {
-            Locale.setDefault(locale)
-        }
+private data class NavLabels(
+    val today: String,
+    val medications: String,
+    val newItem: String,
+    val history: String,
+    val settings: String,
+)
+
+private fun navLabels(languageTag: String): NavLabels {
+    val language = resolvedLanguage(languageTag)
+    return when (language) {
+        "en" -> NavLabels("Today", "Meds", "New", "History", "Settings")
+        "es" -> NavLabels("Hoy", "Medic.", "Nuevo", "Historial", "Ajustes")
+        "fr" -> NavLabels("Auj.", "Médic.", "Nouv.", "Hist.", "Régl.")
+        "de" -> NavLabels("Heute", "Medik.", "Neu", "Verlauf", "Einst.")
+        "it" -> NavLabels("Oggi", "Farm.", "Nuovo", "Storico", "Impost.")
+        else -> NavLabels("Hoje", "Remédios", "Novo", "Histórico", "Config.")
     }
 }
+
+private fun resolvedLanguage(languageTag: String): String =
+    if (languageTag == "system") {
+        java.util.Locale.getDefault().language
+    } else {
+        java.util.Locale.forLanguageTag(languageTag).language
+    }
 
 @Composable
 private fun AddMedicationRoute(
