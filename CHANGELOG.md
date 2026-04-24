@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.9 - 2026-04-24
+
+- corrige definitivamente o pisca-pisca ao trocar idioma aguardando o DataStore carregar antes de aplicar a localidade
+- reforça a Now Bar / Live Updates para publicar com cor padrão se a leitura das preferências ainda não estiver pronta
+
 ## 0.1.8 - 2026-04-24
 
 - corrige loop de recriação da Activity ao aplicar idioma, evitando a tela piscar e impedir a abertura do app

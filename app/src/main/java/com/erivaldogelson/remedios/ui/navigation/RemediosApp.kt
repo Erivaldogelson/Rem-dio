@@ -66,9 +66,10 @@ import java.util.Locale
 fun RemediosApp(
     container: AppContainer,
 ) {
-    val settings by container.settingsRepository.settings.collectAsStateWithLifecycle(
-        initialValue = SettingsSnapshot(),
+    val loadedSettings by container.settingsRepository.settings.collectAsStateWithLifecycle(
+        initialValue = null,
     )
+    val settings = loadedSettings ?: SettingsSnapshot()
     val context = LocalContext.current
     val navController = rememberNavController()
     val currentEntry by navController.currentBackStackEntryAsState()
@@ -81,8 +82,8 @@ fun RemediosApp(
         BottomBarItem(Routes.Settings, "Config.", Icons.Rounded.Settings),
     )
 
-    LaunchedEffect(settings.languageTag) {
-        applyAppLanguage(context, settings.languageTag)
+    LaunchedEffect(loadedSettings?.languageTag) {
+        loadedSettings?.let { applyAppLanguage(context, it.languageTag) }
     }
 
     RemediosTheme(settings = settings) {

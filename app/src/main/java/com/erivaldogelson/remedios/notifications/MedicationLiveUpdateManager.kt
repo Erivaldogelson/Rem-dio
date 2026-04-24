@@ -142,9 +142,13 @@ class MedicationLiveUpdateManager(
             .build()
 
     private fun notificationAccentColor(): Int =
-        runBlocking {
-            val settings = preferencesRepository.settingsValue()
-            applyTone(settings.nowBarColor, settings.nowBarTone)
+        runCatching {
+            runBlocking {
+                val settings = preferencesRepository.settingsValue()
+                applyTone(settings.nowBarColor, settings.nowBarTone)
+            }
+        }.getOrElse {
+            ContextCompat.getColor(context, R.color.notification_accent)
         }
 
     private fun applyTone(color: Long, tone: Int): Int {
