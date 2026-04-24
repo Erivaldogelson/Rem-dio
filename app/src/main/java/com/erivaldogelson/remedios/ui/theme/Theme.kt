@@ -10,6 +10,8 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -60,6 +62,8 @@ private val LightPalette = lightColorScheme(
     error = Color(0xFFB3261E),
 )
 
+val LocalRemediosHapticsEnabled = staticCompositionLocalOf { true }
+
 @Composable
 fun RemediosTheme(
     settings: SettingsSnapshot = SettingsSnapshot(),
@@ -95,10 +99,12 @@ fun RemediosTheme(
     @Suppress("UNUSED_EXPRESSION")
     (context as? Activity)
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = RemediosTypography,
-        shapes = RemediosShapes,
-        content = content,
-    )
+    CompositionLocalProvider(LocalRemediosHapticsEnabled provides settings.hapticsEnabled) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = RemediosTypography,
+            shapes = RemediosShapes,
+            content = content,
+        )
+    }
 }

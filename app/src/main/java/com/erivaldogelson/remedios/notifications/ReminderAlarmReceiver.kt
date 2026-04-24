@@ -34,7 +34,9 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
                         scheduleId = payload.scheduleId,
                         triggerAt = payload.triggerAt,
                     )
-                    container.liveUpdateManager.startDoseLiveUpdate(payload)
+                    if (liveUpdatesEnabled) {
+                        container.liveUpdateManager.startDoseLiveUpdate(payload)
+                    }
                 }
                 ReminderScheduler.EVENT_EXPIRE -> {
                     container.medicationRepository.expireReminder(

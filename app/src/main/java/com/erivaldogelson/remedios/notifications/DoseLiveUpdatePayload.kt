@@ -25,14 +25,8 @@ data class DoseLiveUpdatePayload(
 
     fun timeLabel(): String = triggerAt.format(DateTimeFormatter.ofPattern("HH:mm"))
 
-    fun chipText(now: LocalDateTime = LocalDateTime.now()): String {
-        val minutes = Duration.between(now, triggerAt).toMinutes()
-        return when {
-            minutes > 0 -> "${minutes.coerceAtMost(99)}m"
-            minutes >= -1 -> "agora"
-            else -> "ativo"
-        }
-    }
+    fun chipText(now: LocalDateTime = LocalDateTime.now()): String =
+        medicationName.ifBlank { "Remédio" }.take(12)
 
     companion object {
         fun notificationId(

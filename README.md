@@ -2,7 +2,7 @@
 
 Aplicativo Android nativo para gestão de medicamentos com foco em lembretes confiáveis, registo de doses, OCR pela câmera e uma interface premium em Jetpack Compose.
 
-Versão atual: `0.1.1`
+Versão atual: `0.1.5`
 
 ## O que já está pronto no MVP
 
@@ -99,8 +99,8 @@ Fluxo configurado:
 Exemplo:
 
 ```bash
-git tag v0.1.4
-git push origin v0.1.4
+git tag v0.1.5
+git push origin v0.1.5
 ```
 
 ## Live Updates / Now Bar
@@ -121,8 +121,8 @@ O projeto já inclui a base para lembretes promovidos:
 
 ## Próximos passos sugeridos
 
-1. adicionar edição de medicamento já cadastrado
-2. criar fluxo de backup/restauração com exportação
-3. evoluir o scanner para confirmar múltiplos campos com mais heurísticas
-4. configurar uma chave release persistente via GitHub Secrets
-5. refinar Live Updates com progress styles específicos de versões compatíveis
+1. criar fluxo de backup/restauração com exportação
+2. evoluir o scanner para confirmar múltiplos campos com mais heurísticas
+3. configurar uma chave release persistente via GitHub Secrets
+4. refinar Live Updates com progress styles específicos de versões compatíveis
+5. trocar a logo em emoji por assets vetoriais dedicados quando estiver pronta

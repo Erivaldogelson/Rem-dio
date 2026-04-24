@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -169,10 +170,11 @@ fun RemediosApp(
                             onDeleteMedication = { medication -> viewModel.deleteMedication(medication.id) },
                         )
                     }
-                    composable(Routes.AddMedication) {
+                    composable(Routes.AddMedication) { backStackEntry ->
                         AddMedicationRoute(
                             container = container,
                             navController = navController,
+                            backStackEntry = backStackEntry,
                         )
                     }
                     composable(
@@ -182,6 +184,7 @@ fun RemediosApp(
                         AddMedicationRoute(
                             container = container,
                             navController = navController,
+                            backStackEntry = backStackEntry,
                             medicationId = backStackEntry.arguments?.getLong("medicationId"),
                         )
                     }
@@ -276,6 +279,7 @@ fun RemediosApp(
 private fun AddMedicationRoute(
     container: AppContainer,
     navController: androidx.navigation.NavHostController,
+    backStackEntry: NavBackStackEntry,
     medicationId: Long? = null,
 ) {
     val viewModel: MedicationFormViewModel = viewModel(
@@ -299,8 +303,7 @@ private fun AddMedicationRoute(
         }
     }
 
-    val addEntry = remember(navController) { navController.getBackStackEntry(Routes.AddMedication) }
-    val savedStateHandle = addEntry.savedStateHandle
+    val savedStateHandle = backStackEntry.savedStateHandle
     val ocrRaw by savedStateHandle.getStateFlow("ocr_raw", "").collectAsStateWithLifecycle()
     val ocrName by savedStateHandle.getStateFlow("ocr_name", "").collectAsStateWithLifecycle()
     val ocrDose by savedStateHandle.getStateFlow("ocr_dose", "").collectAsStateWithLifecycle()

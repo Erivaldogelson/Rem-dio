@@ -50,6 +50,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,6 +66,7 @@ import com.erivaldogelson.remedios.ui.theme.Danger
 import com.erivaldogelson.remedios.ui.theme.InkCard
 import com.erivaldogelson.remedios.ui.theme.InkCardSoft
 import com.erivaldogelson.remedios.ui.theme.Lavender
+import com.erivaldogelson.remedios.ui.theme.LocalRemediosHapticsEnabled
 import com.erivaldogelson.remedios.ui.theme.Mint
 import com.erivaldogelson.remedios.ui.theme.Mist
 import com.erivaldogelson.remedios.ui.theme.MistMuted
@@ -150,6 +153,8 @@ private fun RowScope.NavigationItem(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
+    val hapticsEnabled = LocalRemediosHapticsEnabled.current
     val backgroundAlpha by animateFloatAsState(
         targetValue = if (selected) 0.22f else 0f,
         label = "pill_item_background",
@@ -166,7 +171,12 @@ private fun RowScope.NavigationItem(
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClick = onClick,
+                onClick = {
+                    if (hapticsEnabled) {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
+                    onClick()
+                },
             )
             .padding(horizontal = if (selected) 10.dp else 12.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.Center,
@@ -200,9 +210,20 @@ fun MedicationCard(
     onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
+    val hapticsEnabled = LocalRemediosHapticsEnabled.current
+    fun performTapHaptic() {
+        if (hapticsEnabled) {
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+
     Card(
         modifier = modifier.fillMaxWidth(),
-        onClick = onClick,
+        onClick = {
+            performTapHaptic()
+            onClick()
+        },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(30.dp),
     ) {
@@ -258,7 +279,12 @@ fun MedicationCard(
                 tint = Color(medication.accentColor),
             )
             onEdit?.let { edit ->
-                IconButton(onClick = edit) {
+                IconButton(
+                    onClick = {
+                        performTapHaptic()
+                        edit()
+                    },
+                ) {
                     Icon(
                         imageVector = Icons.Rounded.EditNote,
                         contentDescription = "Editar remédio salvo",
@@ -267,7 +293,12 @@ fun MedicationCard(
                 }
             }
             onDelete?.let { delete ->
-                IconButton(onClick = delete) {
+                IconButton(
+                    onClick = {
+                        performTapHaptic()
+                        delete()
+                    },
+                ) {
                     Icon(
                         imageVector = Icons.Rounded.Delete,
                         contentDescription = "Apagar remédio salvo",
@@ -352,6 +383,8 @@ fun AnimatedPrimaryActionButton(
     icon: ImageVector? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val hapticFeedback = LocalHapticFeedback.current
+    val hapticsEnabled = LocalRemediosHapticsEnabled.current
     val scale by animateFloatAsState(
         targetValue = if (interactionSource.collectIsPressedAsState().value) 0.97f else 1f,
         label = "press_scale",
@@ -364,7 +397,12 @@ fun AnimatedPrimaryActionButton(
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = onClick,
+                onClick = {
+                    if (hapticsEnabled) {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
+                    onClick()
+                },
             )
             .padding(horizontal = 20.dp, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -390,6 +428,8 @@ fun RoundedSettingsCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
+    val hapticsEnabled = LocalRemediosHapticsEnabled.current
     val cardContent: @Composable () -> Unit = {
         Row(
             modifier = Modifier
@@ -418,7 +458,12 @@ fun RoundedSettingsCard(
     } else {
         Card(
             modifier = modifier.fillMaxWidth(),
-            onClick = onClick,
+            onClick = {
+                if (hapticsEnabled) {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+                onClick()
+            },
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(28.dp),
         ) {

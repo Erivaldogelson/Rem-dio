@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.5 - 2026-04-24
+
+- corrigido crash ao tocar em editar um remédio salvo
+- feedback tátil agora respeita a configuração e é aplicado em navegação, botões, cartões e links
+- Now Bar / Live Updates agora mostra o nome do remédio no estado compacto e respeita o toggle ao vencer a dose
+- tela de configurações reorganizada em menu principal com páginas internas de Aparência, Lembretes e Sobre
+- botão de voltar nas telas internas ganhou formato circular no estilo das referências
+- seção Sobre adicionada com desenvolvedor Erivaldo Gelson da Rocha João e links para Instagram, Threads e GitHub
+
 ## 0.1.4 - 2026-04-24
 
 - Live Updates / Now Bar agora são iniciadas imediatamente após salvar um remédio com lembretes ativos
