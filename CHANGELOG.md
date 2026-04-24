@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3 - 2026-04-24
+
+- adiciona modo claro com paleta própria, cards claros e textos ajustados pelo Material Theme
+- configurações agora permitem escolher Claro, Escuro ou Auto
+- corrige a navegação inferior para impedir texto vertical no item Novo/Adicionar
+- mantém a barra em pílula compacta com labels em uma linha
+
 ## 0.1.2 - 2026-04-24
 
 - logo atualizada para p?lula em efeito 3D sobre fundo branco

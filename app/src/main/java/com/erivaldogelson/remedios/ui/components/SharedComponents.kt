@@ -82,13 +82,14 @@ fun PremiumScaffoldBackground(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Box(
         modifier = modifier.background(
             brush = Brush.verticalGradient(
                 colors = listOf(
-                    Color(0xFF0C0B14),
-                    Color(0xFF141022),
-                    Color(0xFF110E1D),
+                    colorScheme.background,
+                    colorScheme.surfaceVariant.copy(alpha = 0.88f),
+                    colorScheme.background,
                 ),
             ),
         ),
@@ -98,7 +99,7 @@ fun PremiumScaffoldBackground(
                 .size(320.dp)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Color(0x33B999FF), Color.Transparent),
+                        colors = listOf(colorScheme.primary.copy(alpha = 0.22f), Color.Transparent),
                     ),
                     shape = CircleShape,
                 )
@@ -119,18 +120,18 @@ fun PillBottomNavigation(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 14.dp),
-        color = InkCardSoft.copy(alpha = 0.92f),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.92f),
         shape = RoundedCornerShape(36.dp),
         tonalElevation = 8.dp,
         shadowElevation = 16.dp,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             items.forEach { item ->
                 val selected = item.route == selectedRoute
-                val weightModifier = Modifier.weight(1f)
+                val weightModifier = Modifier.weight(if (selected) 2.2f else 1f)
                 NavigationItem(weightModifier, item, selected) { onSelect(item) }
             }
         }
@@ -154,21 +155,24 @@ private fun RowScope.NavigationItem(
                 indication = null,
                 onClick = onClick,
             )
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = if (selected) 10.dp else 12.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = item.icon,
             contentDescription = item.label,
-            tint = if (selected) Mist else MistMuted,
+            tint = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (selected) {
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(6.dp))
             Text(
                 text = item.label,
-                style = MaterialTheme.typography.labelLarge,
-                color = Mist,
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -184,7 +188,7 @@ fun MedicationCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = InkCard),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(30.dp),
     ) {
         Row(
@@ -222,14 +226,14 @@ fun MedicationCard(
                 Text(
                     text = medication.name,
                     style = MaterialTheme.typography.titleLarge,
-                    color = Mist,
+                    color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = "${medication.dosage}  •  Próximo ${medication.nextTimeLabel}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MistMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             StatusPill(
@@ -260,17 +264,18 @@ fun NextDoseCircle(
         targetValue = nextDose?.progress ?: 0f,
         label = "dose_progress",
     )
+    val outlineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
     Box(
         modifier = modifier
             .aspectRatio(1f)
             .clip(CircleShape)
-            .background(InkCard)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(28.dp),
         contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
             drawArc(
-                color = OutlineSoft,
+                color = outlineColor,
                 startAngle = -90f,
                 sweepAngle = 360f,
                 useCenter = false,
@@ -292,14 +297,14 @@ fun NextDoseCircle(
             Text(
                 text = nextDose?.remainingMinutes?.let { "${it.coerceAtLeast(0)} min" } ?: "--",
                 style = MaterialTheme.typography.displayMedium,
-                color = Mist,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(6.dp))
             Text(
                 text = nextDose?.medicationName ?: "Sem doses próximas",
                 style = MaterialTheme.typography.titleMedium,
-                color = MistMuted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
             nextDose?.let {
@@ -370,9 +375,9 @@ fun RoundedSettingsCard(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = MaterialTheme.typography.titleMedium, color = Mist)
+                Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                 Spacer(Modifier.height(4.dp))
-                Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = MistMuted)
+                Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Spacer(Modifier.width(12.dp))
             trailing()
@@ -381,7 +386,7 @@ fun RoundedSettingsCard(
     if (onClick == null) {
         Card(
             modifier = modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = InkCard),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(28.dp),
         ) {
             cardContent()
@@ -390,7 +395,7 @@ fun RoundedSettingsCard(
         Card(
             modifier = modifier.fillMaxWidth(),
             onClick = onClick,
-            colors = CardDefaults.cardColors(containerColor = InkCard),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(28.dp),
         ) {
             cardContent()
@@ -406,14 +411,14 @@ fun OcrResultConfirmationCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = InkCard),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(28.dp),
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text("Sugestões do OCR", style = MaterialTheme.typography.titleLarge, color = Mist)
+            Text("Sugestões do OCR", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(
                     listOfNotNull(
@@ -434,7 +439,7 @@ fun OcrResultConfirmationCard(
                 Text(
                     text = suggestion.suggestedInstructions,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MistMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             AnimatedPrimaryActionButton(
@@ -453,7 +458,7 @@ fun DoseLogItem(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = InkCard),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(26.dp),
     ) {
         Row(
@@ -480,15 +485,15 @@ fun DoseLogItem(
                 tint = item.status.tintColor(),
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.medicationName, style = MaterialTheme.typography.titleMedium, color = Mist)
+                Text(item.medicationName, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                 Text(
                     "${item.dosage} • ${item.scheduledAt.format(DateTimeFormatter.ofPattern("dd/MM • HH:mm"))}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MistMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (item.note.isNotBlank()) {
                     Spacer(Modifier.height(6.dp))
-                    Text(item.note, style = MaterialTheme.typography.bodyMedium, color = MistMuted)
+                    Text(item.note, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -504,16 +509,16 @@ fun EmptyStateCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, OutlineSoft, RoundedCornerShape(30.dp)),
-        colors = CardDefaults.cardColors(containerColor = InkCard.copy(alpha = 0.65f)),
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f), RoundedCornerShape(30.dp)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.65f)),
         shape = RoundedCornerShape(30.dp),
     ) {
         Column(
             modifier = Modifier.padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(title, style = MaterialTheme.typography.titleLarge, color = Mist)
-            Text(message, style = MaterialTheme.typography.bodyMedium, color = MistMuted)
+            Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+            Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

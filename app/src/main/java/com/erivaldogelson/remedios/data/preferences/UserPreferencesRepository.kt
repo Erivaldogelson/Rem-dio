@@ -64,7 +64,7 @@ class UserPreferencesRepository(context: Context) {
 
     private fun Preferences.toSettings(): SettingsSnapshot = SettingsSnapshot(
         themeMode = this[Keys.themeMode]
-            ?.let { AppThemeMode.valueOf(it) }
+            ?.let { value -> runCatching { AppThemeMode.valueOf(value) }.getOrNull() }
             ?: AppThemeMode.DARK,
         dynamicColorEnabled = this[Keys.dynamicColor] ?: true,
         onboardingCompleted = this[Keys.onboardingCompleted] ?: false,

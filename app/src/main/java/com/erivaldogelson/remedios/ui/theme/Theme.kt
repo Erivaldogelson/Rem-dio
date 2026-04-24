@@ -7,6 +7,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -40,6 +42,24 @@ private val DarkPalette = darkColorScheme(
     error = Danger,
 )
 
+private val LightPalette = lightColorScheme(
+    primary = VioletAccent,
+    onPrimary = Color.White,
+    primaryContainer = PorcelainCardSoft,
+    onPrimaryContainer = InkText,
+    secondary = ElectricLilac,
+    onSecondary = Color.White,
+    tertiary = RoseGlow,
+    background = Porcelain,
+    onBackground = InkText,
+    surface = PorcelainCard,
+    onSurface = InkText,
+    surfaceVariant = PorcelainCardSoft,
+    onSurfaceVariant = InkTextMuted,
+    outline = OutlineLight,
+    error = Color(0xFFB3261E),
+)
+
 @Composable
 fun RemediosTheme(
     settings: SettingsSnapshot = SettingsSnapshot(),
@@ -47,19 +67,29 @@ fun RemediosTheme(
 ) {
     val context = LocalContext.current
     val shouldUseDark = when (settings.themeMode) {
+        AppThemeMode.LIGHT -> false
         AppThemeMode.DARK -> true
         AppThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
     val dynamicColors = settings.dynamicColorEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val colorScheme = when {
         dynamicColors && shouldUseDark -> dynamicDarkColorScheme(context)
-        else -> DarkPalette
+        dynamicColors && !shouldUseDark -> dynamicLightColorScheme(context)
+        shouldUseDark -> DarkPalette
+        else -> LightPalette
     }.copy(
-        background = Ink,
-        surface = InkCard,
-        surfaceVariant = InkCardSoft,
-        primary = if (dynamicColors && shouldUseDark) Color(context.getColor(android.R.color.system_accent1_200)) else SoftLilac,
-        onPrimary = Ink,
+        background = if (shouldUseDark) Ink else Porcelain,
+        surface = if (shouldUseDark) InkCard else PorcelainCard,
+        surfaceVariant = if (shouldUseDark) InkCardSoft else PorcelainCardSoft,
+        outline = if (shouldUseDark) OutlineSoft else OutlineLight,
+        primary = if (dynamicColors) {
+            Color(context.getColor(android.R.color.system_accent1_200))
+        } else if (shouldUseDark) {
+            SoftLilac
+        } else {
+            VioletAccent
+        },
+        onPrimary = if (shouldUseDark) Ink else Color.White,
     )
 
     @Suppress("UNUSED_EXPRESSION")

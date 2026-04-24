@@ -41,6 +41,7 @@ enum class HistoryFilter {
 }
 
 enum class AppThemeMode {
+    LIGHT,
     DARK,
     SYSTEM,
 }
@@ -153,4 +154,3 @@ data class SettingsSnapshot(
     val hapticsEnabled: Boolean = true,
     val languageTag: String = "pt-BR",
 )
-

@@ -69,18 +69,18 @@ fun SplashScreen(
                         modifier = Modifier
                             .size(112.dp)
                             .clip(CircleShape)
-                            .background(Mist),
+                            .background(MaterialTheme.colorScheme.onBackground),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text("💊", style = MaterialTheme.typography.displayLarge)
                     }
                     Spacer(Modifier.height(20.dp))
-                    Text("Remédios", style = MaterialTheme.typography.displayLarge, color = Mist)
+                    Text("Remédios", style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onBackground)
                     Spacer(Modifier.height(8.dp))
                     Text(
                         "Cuidado calmo, bonito e preciso para cada dose.",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Mist.copy(alpha = 0.72f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -125,7 +125,7 @@ fun OnboardingScreen(
             Text(
                 text = "Bem-vindo ao Remédios",
                 style = MaterialTheme.typography.displayMedium,
-                color = Mist,
+                color = MaterialTheme.colorScheme.onBackground,
             )
             HorizontalPager(
                 state = pagerState,
@@ -147,12 +147,12 @@ fun OnboardingScreen(
                         Text(item.emoji, style = MaterialTheme.typography.displayLarge)
                     }
                     Spacer(Modifier.height(28.dp))
-                    Text(item.title, style = MaterialTheme.typography.displayMedium, color = Mist)
+                    Text(item.title, style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
                     Spacer(Modifier.height(14.dp))
                     Text(
                         item.description,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Mist.copy(alpha = 0.76f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.76f),
                     )
                 }
             }
@@ -161,7 +161,7 @@ fun OnboardingScreen(
                     Text(
                         text = "${currentPage + 1} / ${pages.size}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Mist.copy(alpha = 0.58f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f),
                         fontWeight = FontWeight.Medium,
                     )
                 }

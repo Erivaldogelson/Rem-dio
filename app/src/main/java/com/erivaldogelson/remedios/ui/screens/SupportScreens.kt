@@ -75,7 +75,7 @@ fun HistoryScreen(
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Histórico", style = MaterialTheme.typography.displayMedium, color = Mist)
+            Text("Histórico", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 HistoryFilter.entries.forEach { filter ->
                     FilterChip(
@@ -121,17 +121,22 @@ fun SettingsScreen(
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text("Configurações", style = MaterialTheme.typography.displayMedium, color = Mist)
+            Text("Configurações", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
             Text(
                 "Tema, idioma, permissões, backup e a base para Live Updates.",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MistMuted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             RoundedSettingsCard(
                 title = "Tema",
-                subtitle = "Escuro premium por padrão, com opção de seguir o sistema.",
+                subtitle = "Escolha claro, escuro ou automático conforme o sistema.",
                 trailing = {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = settings.themeMode == AppThemeMode.LIGHT,
+                            onClick = { onThemeModeChange(AppThemeMode.LIGHT) },
+                            label = { Text("Claro") },
+                        )
                         FilterChip(
                             selected = settings.themeMode == AppThemeMode.DARK,
                             onClick = { onThemeModeChange(AppThemeMode.DARK) },
@@ -140,7 +145,7 @@ fun SettingsScreen(
                         FilterChip(
                             selected = settings.themeMode == AppThemeMode.SYSTEM,
                             onClick = { onThemeModeChange(AppThemeMode.SYSTEM) },
-                            label = { Text("Sistema") },
+                            label = { Text("Auto") },
                         )
                     }
                 },
@@ -163,7 +168,7 @@ fun SettingsScreen(
             RoundedSettingsCard(
                 title = "Permissões",
                 subtitle = "Câmera, notificações e alarmes exatos.",
-                trailing = { Icon(Icons.Rounded.Notifications, contentDescription = null, tint = Mist) },
+                trailing = { Icon(Icons.Rounded.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground) },
                 onClick = onOpenPermissions,
             )
             AnimatedPrimaryActionButton(
@@ -196,8 +201,8 @@ fun PermissionsScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                        titleContentColor = Mist,
-                        navigationIconContentColor = Mist,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
                 )
             },
@@ -257,8 +262,8 @@ fun ActiveReminderScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                        titleContentColor = Mist,
-                        navigationIconContentColor = Mist,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
                 )
             },
@@ -296,13 +301,13 @@ fun ActiveReminderScreen(
                         .coerceAtLeast(0L)
                     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-                    Text("Dose em andamento", style = MaterialTheme.typography.displayMedium, color = Mist)
+                    Text("Dose em andamento", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
                     Text(
                         activeReminder.medicationName,
                         style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Bold),
-                        color = Mist,
+                        color = MaterialTheme.colorScheme.onBackground,
                     )
-                    Text(activeReminder.dosage, style = MaterialTheme.typography.titleLarge, color = MistMuted)
+                    Text(activeReminder.dosage, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     EmptyStateCard(
                         title = "Janela de registro",
                         message = "Restam ${remainingMinutes} min para registrar. Ativa at? ${activeReminder.expiresAt.format(timeFormatter)} com a??es r?pidas e Now Bar quando compat?vel.",
@@ -311,7 +316,7 @@ fun ActiveReminderScreen(
                         progress = { progress.coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth(),
                         color = Warning,
-                        trackColor = Mist.copy(alpha = 0.14f),
+                        trackColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.14f),
                     )
                     AnimatedPrimaryActionButton(
                         text = "Registrar tomada",
@@ -329,8 +334,8 @@ fun ActiveReminderScreen(
                             text = "Ignorar",
                             onClick = onSkip,
                             modifier = Modifier.weight(1f),
-                            containerColor = Mist.copy(alpha = 0.16f),
-                            contentColor = Mist,
+                            containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.16f),
+                            contentColor = MaterialTheme.colorScheme.onBackground,
                         )
                     }
                 }

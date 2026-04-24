@@ -14,7 +14,7 @@ Versão atual: `0.1.1`
 - OCR com ML Kit para sugerir nome, dose e fabricante
 - Scanner em tempo real com CameraX + OCR
 - Histórico por período
-- Configurações com base para tema, Material You, haptics e Live Updates
+- Configurações com modo claro/escuro/auto, Material You, haptics e Live Updates
 - Room Database + DataStore + ViewModel + Navigation Compose
 - AlarmManager + WorkManager + notificações locais com ações rápidas
 - Estrutura preparada para notificações promovidas / Now Bar em versões compatíveis
@@ -24,7 +24,7 @@ Versão atual: `0.1.1`
 
 O app foi desenhado para traduzir a linguagem das referências para o contexto de saúde:
 
-- dark theme premium por padrão
+- tema claro, escuro premium e automático pelo sistema
 - cartões grandes e suaves
 - tipografia generosa
 - paleta lilás / lavanda sobre fundo escuro
@@ -99,8 +99,8 @@ Fluxo configurado:
 Exemplo:
 
 ```bash
-git tag v0.1.2
-git push origin v0.1.2
+git tag v0.1.3
+git push origin v0.1.3
 ```
 
 ## Live Updates / Now Bar

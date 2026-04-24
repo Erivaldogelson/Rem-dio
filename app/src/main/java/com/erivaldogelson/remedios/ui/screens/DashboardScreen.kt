@@ -60,12 +60,12 @@ fun DashboardScreen(
             Text(
                 text = state.greetingTitle,
                 style = MaterialTheme.typography.displayLarge,
-                color = Mist,
+                color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
                 text = "Tudo o que importa para a próxima medicação, num lugar só.",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MistMuted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             NextDoseCircle(
@@ -96,25 +96,26 @@ fun DashboardScreen(
                     onClick = onSkip,
                     icon = Icons.Rounded.AlarmOn,
                     modifier = Modifier.fillMaxWidth(),
-                    containerColor = Mist.copy(alpha = 0.88f),
+                    containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.88f),
+                    contentColor = MaterialTheme.colorScheme.background,
                 )
             }
 
             state.nextDose?.let { nextDose ->
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = InkCard),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = MaterialTheme.shapes.large,
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text("Próximo", style = MaterialTheme.typography.titleMedium, color = MistMuted)
-                        Text(nextDose.medicationName, style = MaterialTheme.typography.titleLarge, color = Mist)
+                        Text("Próximo", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(nextDose.medicationName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
                         Text(
                             "${nextDose.dosage} • ${nextDose.scheduledAt.toLocalTime()}",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MistMuted,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -138,7 +139,7 @@ fun DashboardScreen(
 
             if (state.activeReminder != null) {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = InkCard),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = MaterialTheme.shapes.large,
                     onClick = onOpenActiveReminder,
                 ) {
@@ -150,14 +151,14 @@ fun DashboardScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Lembrete ativo", style = MaterialTheme.typography.titleMedium, color = Mist)
+                            Text("Lembrete ativo", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                             Text(
                                 state.activeReminder.medicationName,
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MistMuted,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        Icon(Icons.Rounded.AlarmOn, contentDescription = null, tint = Mist, modifier = Modifier.size(22.dp))
+                        Icon(Icons.Rounded.AlarmOn, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
                     }
                 }
             }
@@ -166,8 +167,8 @@ fun DashboardScreen(
                 text = "Ver medicamentos",
                 onClick = onOpenMedications,
                 modifier = Modifier.fillMaxWidth(),
-                containerColor = Mist.copy(alpha = 0.12f),
-                contentColor = Mist,
+                containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
+                contentColor = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(90.dp))
         }
@@ -182,15 +183,15 @@ private fun MetricCard(
 ) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = InkCard),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = MaterialTheme.shapes.large,
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text(title, style = MaterialTheme.typography.bodyMedium, color = MistMuted)
-            Text(value, style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold), color = Mist)
+            Text(title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
         }
     }
 }

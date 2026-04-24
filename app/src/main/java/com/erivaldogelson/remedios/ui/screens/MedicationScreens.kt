@@ -103,11 +103,11 @@ fun MedicationListScreen(
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            Text("Medicamentos", style = MaterialTheme.typography.displayMedium, color = Mist)
+            Text("Medicamentos", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
             Text(
                 "Seu arsenal diário com imagem, dose, horários e histórico.",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MistMuted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (medications.isEmpty()) {
                 EmptyStateCard(
@@ -168,8 +168,8 @@ fun AddMedicationScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                        titleContentColor = Mist,
-                        navigationIconContentColor = Mist,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
                 )
             },
@@ -186,7 +186,7 @@ fun AddMedicationScreen(
                 Text(
                     "Cadastre com visual, contexto e horários claros.",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MistMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 ImageSelectorCard(
                     imageUri = draft.imageUri,
@@ -287,7 +287,7 @@ private fun ImageSelectorCard(
     onScan: () -> Unit,
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = InkCard),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = MaterialTheme.shapes.large,
     ) {
         Column(
@@ -296,7 +296,7 @@ private fun ImageSelectorCard(
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Foto do remédio", style = MaterialTheme.typography.titleLarge, color = Mist)
+            Text("Foto do remédio", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
             if (imageUri != null) {
                 AsyncImage(
                     model = imageUri,
@@ -313,13 +313,13 @@ private fun ImageSelectorCard(
                         .background(SoftLilac.copy(alpha = 0.08f), MaterialTheme.shapes.large),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("Sem foto ainda", color = MistMuted)
+                    Text("Sem foto ainda", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             if (isAnalyzing) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Text("Analisando imagem e OCR...", color = MistMuted)
+                    Text("Analisando imagem e OCR...", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -355,8 +355,8 @@ fun MedicationDetailScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                        titleContentColor = Mist,
-                        navigationIconContentColor = Mist,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
                 )
             },
@@ -371,17 +371,17 @@ fun MedicationDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 details?.let { medication ->
-                    Card(colors = CardDefaults.cardColors(containerColor = InkCard), shape = MaterialTheme.shapes.large) {
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = MaterialTheme.shapes.large) {
                         Column(
                             modifier = Modifier.padding(20.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            Text(medication.name, style = MaterialTheme.typography.displayMedium, color = Mist)
-                            Text("${medication.dosage} • ${medication.frequencyLabel}", style = MaterialTheme.typography.bodyLarge, color = MistMuted)
-                            Text("Horários: ${medication.schedules.joinToString { it.format(DateTimeFormatter.ofPattern("HH:mm")) }}", color = MistMuted)
-                            Text("Instruções: ${medication.instructions}", color = MistMuted)
-                            Text("Observações: ${medication.notes}", color = MistMuted)
-                            Text("Quantidade restante: ${medication.quantityRemaining}", color = MistMuted)
+                            Text(medication.name, style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
+                            Text("${medication.dosage} • ${medication.frequencyLabel}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Horários: ${medication.schedules.joinToString { it.format(DateTimeFormatter.ofPattern("HH:mm")) }}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Instruções: ${medication.instructions}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Observações: ${medication.notes}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Quantidade restante: ${medication.quantityRemaining}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 } ?: EmptyStateCard(
@@ -417,15 +417,15 @@ fun ScanMedicationScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    titleContentColor = Mist,
-                    navigationIconContentColor = Mist,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                 ),
             )
             Card(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(20.dp),
-                colors = CardDefaults.cardColors(containerColor = InkCard.copy(alpha = 0.96f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)),
                 shape = MaterialTheme.shapes.large,
             ) {
                 Column(
@@ -434,14 +434,14 @@ fun ScanMedicationScreen(
                         .padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Text("Leitura em tempo real", style = MaterialTheme.typography.titleLarge, color = Mist)
+                    Text("Leitura em tempo real", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
                     Text(
                         suggestion.suggestedName.ifBlank { "Aponte a câmera para a embalagem" },
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MistMuted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (suggestion.suggestedDosage.isNotBlank()) {
-                        Text("Dose detectada: ${suggestion.suggestedDosage}", color = MistMuted)
+                        Text("Dose detectada: ${suggestion.suggestedDosage}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     AnimatedPrimaryActionButton(
                         text = "Usar esta leitura",

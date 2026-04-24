@@ -69,8 +69,8 @@ fun RemediosApp(
     val currentRoute = currentEntry?.destination?.route
     val bottomItems = listOf(
         BottomBarItem(Routes.Today, "Hoje", Icons.Rounded.Today),
-        BottomBarItem(Routes.Medications, "Rem?dios", Icons.Rounded.Medication),
-        BottomBarItem(Routes.AddMedication, "Adicionar", Icons.Rounded.Add),
+        BottomBarItem(Routes.Medications, "Remédios", Icons.Rounded.Medication),
+        BottomBarItem(Routes.AddMedication, "Novo", Icons.Rounded.Add),
         BottomBarItem(Routes.History, "Histórico", Icons.Rounded.History),
         BottomBarItem(Routes.Settings, "Config.", Icons.Rounded.Settings),
     )
