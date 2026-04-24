@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.4 - 2026-04-24
+
+- Live Updates / Now Bar agora são iniciadas imediatamente após salvar um remédio com lembretes ativos
+- navegação em pílula ganhou animação de seleção, escala de ícone e transição suave de largura
+- tocar em Hoje na navegação inferior agora retorna corretamente para a tela inicial
+- cadastro de medicamento agora permite escolher data de início e data de fim em calendário
+- campo de horários permite editar múltiplos horários sem apagar entradas parciais
+- lista Ver medicamentos ganhou botão para editar remédios salvos
+
 ## 0.1.3 - 2026-04-24
 
 - adiciona modo claro com paleta própria, cards claros e textos ajustados pelo Material Theme

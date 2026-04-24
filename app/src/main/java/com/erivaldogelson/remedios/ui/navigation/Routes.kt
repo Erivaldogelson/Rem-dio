@@ -12,7 +12,8 @@ object Routes {
     const val Permissions = "permissions"
     const val ActiveReminder = "active_reminder"
     const val MedicationDetail = "medication_detail/{medicationId}"
+    const val EditMedication = "edit_medication/{medicationId}"
 
     fun medicationDetail(id: Long) = "medication_detail/$id"
+    fun editMedication(id: Long) = "edit_medication/$id"
 }
-

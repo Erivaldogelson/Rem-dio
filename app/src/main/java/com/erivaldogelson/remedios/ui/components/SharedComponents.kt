@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Card
@@ -131,7 +132,11 @@ fun PillBottomNavigation(
         ) {
             items.forEach { item ->
                 val selected = item.route == selectedRoute
-                val weightModifier = Modifier.weight(if (selected) 2.2f else 1f)
+                val itemWeight by animateFloatAsState(
+                    targetValue = if (selected) 2.2f else 1f,
+                    label = "pill_item_weight",
+                )
+                val weightModifier = Modifier.weight(itemWeight)
                 NavigationItem(weightModifier, item, selected) { onSelect(item) }
             }
         }
@@ -145,7 +150,15 @@ private fun RowScope.NavigationItem(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val background = if (selected) SoftLilac.copy(alpha = 0.18f) else Color.Transparent
+    val backgroundAlpha by animateFloatAsState(
+        targetValue = if (selected) 0.22f else 0f,
+        label = "pill_item_background",
+    )
+    val iconScale by animateFloatAsState(
+        targetValue = if (selected) 1.12f else 1f,
+        label = "pill_icon_scale",
+    )
+    val background = SoftLilac.copy(alpha = backgroundAlpha)
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(28.dp))
@@ -163,6 +176,7 @@ private fun RowScope.NavigationItem(
             imageVector = item.icon,
             contentDescription = item.label,
             tint = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.scale(iconScale),
         )
         if (selected) {
             Spacer(Modifier.width(6.dp))
@@ -183,6 +197,7 @@ fun MedicationCard(
     medication: MedicationSummary,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
 ) {
     Card(
@@ -242,6 +257,15 @@ fun MedicationCard(
                 background = Color(medication.accentColor).copy(alpha = 0.14f),
                 tint = Color(medication.accentColor),
             )
+            onEdit?.let { edit ->
+                IconButton(onClick = edit) {
+                    Icon(
+                        imageVector = Icons.Rounded.EditNote,
+                        contentDescription = "Editar remédio salvo",
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
             onDelete?.let { delete ->
                 IconButton(onClick = delete) {
                     Icon(

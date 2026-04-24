@@ -53,6 +53,25 @@ class ReminderScheduler(
         }
     }
 
+    suspend fun nextLiveUpdatePayloadForMedication(medicationId: Long): DoseLiveUpdatePayload? {
+        val now = LocalDateTime.now()
+        val medication = medicationDao.getMedicationById(medicationId) ?: return null
+        val reminder = reminderDao.getAll()
+            .filter { it.medicationId == medicationId && it.expiresAt > now }
+            .minByOrNull { it.triggerAt }
+            ?: return null
+
+        return DoseLiveUpdatePayload(
+            medicationId = reminder.medicationId,
+            scheduleId = reminder.scheduleId,
+            medicationName = medication.name,
+            dosage = medication.dosage,
+            triggerAt = reminder.triggerAt,
+            liveUpdateStartAt = now,
+            expiresAt = reminder.expiresAt,
+        )
+    }
+
     fun scheduleLiveUpdateProgressTick(payload: DoseLiveUpdatePayload) {
         val now = LocalDateTime.now()
         if (!now.isBefore(payload.triggerAt)) return

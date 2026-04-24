@@ -39,6 +39,8 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -47,6 +49,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -83,7 +86,10 @@ import com.erivaldogelson.remedios.ui.theme.MistMuted
 import com.erivaldogelson.remedios.ui.theme.RemediosTheme
 import com.erivaldogelson.remedios.ui.theme.SoftLilac
 import com.erivaldogelson.remedios.ui.viewmodel.MedicationFormUiState
+import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -92,6 +98,7 @@ import java.util.concurrent.Executors
 fun MedicationListScreen(
     medications: List<MedicationSummary>,
     onMedicationClick: (MedicationSummary) -> Unit,
+    onEditMedication: (MedicationSummary) -> Unit,
     onDeleteMedication: (MedicationSummary) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -120,6 +127,7 @@ fun MedicationListScreen(
                         MedicationCard(
                             medication = medication,
                             onClick = { onMedicationClick(medication) },
+                            onEdit = { onEditMedication(medication) },
                             onDelete = { onDeleteMedication(medication) },
                         )
                     }
@@ -134,10 +142,13 @@ fun MedicationListScreen(
 @OptIn(ExperimentalLayoutApi::class)
 fun AddMedicationScreen(
     uiState: MedicationFormUiState,
+    isEditing: Boolean = false,
     onNameChange: (String) -> Unit,
     onDosageChange: (String) -> Unit,
     onFrequencyChange: (String) -> Unit,
     onTimesChange: (String) -> Unit,
+    onStartDateChange: (LocalDate) -> Unit,
+    onEndDateChange: (LocalDate?) -> Unit,
     onInstructionsChange: (String) -> Unit,
     onNotesChange: (String) -> Unit,
     onManufacturerChange: (String) -> Unit,
@@ -152,15 +163,12 @@ fun AddMedicationScreen(
     modifier: Modifier = Modifier,
 ) {
     val draft = uiState.draft
-    val timeText = remember(draft.times) {
-        draft.times.joinToString(", ") { it.format(DateTimeFormatter.ofPattern("HH:mm")) }
-    }
 
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Adicionar medicamento") },
+                    title = { Text(if (isEditing) "Editar medicamento" else "Adicionar medicamento") },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.Rounded.ArrowBack, contentDescription = "Voltar")
@@ -239,11 +247,26 @@ fun AddMedicationScreen(
                     label = { Text("Frequência") },
                 )
                 OutlinedTextField(
-                    value = timeText,
+                    value = uiState.timesText,
                     onValueChange = onTimesChange,
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Horários (ex: 08:00, 20:00)") },
                 )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    DatePickerField(
+                        label = "Início",
+                        date = draft.startDate,
+                        onDateChange = { selectedDate -> selectedDate?.let(onStartDateChange) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    DatePickerField(
+                        label = "Fim",
+                        date = draft.endDate,
+                        onDateChange = onEndDateChange,
+                        allowClear = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
                 OutlinedTextField(
                     value = draft.manufacturer,
                     onValueChange = onManufacturerChange,
@@ -267,13 +290,84 @@ fun AddMedicationScreen(
                     Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
                 }
                 AnimatedPrimaryActionButton(
-                    text = if (uiState.isSaving) "Salvando..." else "Salvar medicamento",
+                    text = if (uiState.isSaving) {
+                        "Salvando..."
+                    } else if (isEditing) {
+                        "Atualizar medicamento"
+                    } else {
+                        "Salvar medicamento"
+                    },
                     onClick = onSave,
                     modifier = Modifier.fillMaxWidth(),
                     icon = Icons.Rounded.EditNote,
                 )
                 Spacer(Modifier.height(90.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun DatePickerField(
+    label: String,
+    date: LocalDate?,
+    onDateChange: (LocalDate?) -> Unit,
+    modifier: Modifier = Modifier,
+    allowClear: Boolean = false,
+) {
+    var showPicker by remember { mutableStateOf(false) }
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("dd/MM/yyyy") }
+
+    OutlinedTextField(
+        value = date?.format(dateFormatter) ?: "Sem fim",
+        onValueChange = {},
+        modifier = modifier,
+        readOnly = true,
+        label = { Text(label) },
+        trailingIcon = {
+            TextButton(onClick = { showPicker = true }) {
+                Text("Escolher")
+            }
+        },
+    )
+
+    if (showPicker) {
+        val pickerState = androidx.compose.material3.rememberDatePickerState(
+            initialSelectedDateMillis = date?.toUtcMillis(),
+        )
+        DatePickerDialog(
+            onDismissRequest = { showPicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pickerState.selectedDateMillis?.let { selectedMillis ->
+                            onDateChange(selectedMillis.toLocalDateUtc())
+                        }
+                        showPicker = false
+                    },
+                ) {
+                    Text("Confirmar")
+                }
+            },
+            dismissButton = {
+                Row {
+                    if (allowClear) {
+                        TextButton(
+                            onClick = {
+                                onDateChange(null)
+                                showPicker = false
+                            },
+                        ) {
+                            Text("Sem fim")
+                        }
+                    }
+                    TextButton(onClick = { showPicker = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            },
+        ) {
+            DatePicker(state = pickerState)
         }
     }
 }
@@ -514,6 +608,12 @@ fun parseTimesInput(input: String): List<LocalTime> =
         .distinct()
         .sorted()
 
+private fun LocalDate.toUtcMillis(): Long =
+    atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
+
+private fun Long.toLocalDateUtc(): LocalDate =
+    Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
+
 @Preview
 @Composable
 private fun MedicationListPreview() {
@@ -521,6 +621,7 @@ private fun MedicationListPreview() {
         MedicationListScreen(
             medications = PreviewData.medicationList,
             onMedicationClick = { _ -> },
+            onEditMedication = { _ -> },
             onDeleteMedication = { _ -> },
         )
     }
@@ -536,6 +637,8 @@ private fun AddMedicationPreview() {
             onDosageChange = {},
             onFrequencyChange = {},
             onTimesChange = {},
+            onStartDateChange = {},
+            onEndDateChange = {},
             onInstructionsChange = {},
             onNotesChange = {},
             onManufacturerChange = {},

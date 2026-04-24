@@ -47,7 +47,6 @@ import com.erivaldogelson.remedios.ui.screens.PermissionsScreen
 import com.erivaldogelson.remedios.ui.screens.ScanMedicationScreen
 import com.erivaldogelson.remedios.ui.screens.SettingsScreen
 import com.erivaldogelson.remedios.ui.screens.SplashScreen
-import com.erivaldogelson.remedios.ui.screens.parseTimesInput
 import com.erivaldogelson.remedios.ui.theme.RemediosTheme
 import com.erivaldogelson.remedios.ui.viewmodel.DashboardViewModel
 import com.erivaldogelson.remedios.ui.viewmodel.HistoryViewModel
@@ -56,6 +55,7 @@ import com.erivaldogelson.remedios.ui.viewmodel.MedicationFormViewModel
 import com.erivaldogelson.remedios.ui.viewmodel.MedicationListViewModel
 import com.erivaldogelson.remedios.ui.viewmodel.OnboardingViewModel
 import com.erivaldogelson.remedios.ui.viewmodel.SettingsViewModel
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun RemediosApp(
@@ -83,10 +83,19 @@ fun RemediosApp(
                         items = bottomItems,
                         selectedRoute = currentRoute.orEmpty(),
                         onSelect = { item ->
-                            navController.navigate(item.route) {
-                                popUpTo(Routes.Today) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            if (item.route == Routes.Today) {
+                                val popped = navController.popBackStack(Routes.Today, inclusive = false)
+                                if (!popped) {
+                                    navController.navigate(Routes.Today) {
+                                        launchSingleTop = true
+                                    }
+                                }
+                            } else {
+                                navController.navigate(item.route) {
+                                    popUpTo(Routes.Today) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = item.route != Routes.AddMedication
+                                }
                             }
                         },
                     )
@@ -154,6 +163,9 @@ fun RemediosApp(
                             onMedicationClick = { medication ->
                                 navController.navigate(Routes.medicationDetail(medication.id))
                             },
+                            onEditMedication = { medication ->
+                                navController.navigate(Routes.editMedication(medication.id))
+                            },
                             onDeleteMedication = { medication -> viewModel.deleteMedication(medication.id) },
                         )
                     }
@@ -161,6 +173,16 @@ fun RemediosApp(
                         AddMedicationRoute(
                             container = container,
                             navController = navController,
+                        )
+                    }
+                    composable(
+                        route = Routes.EditMedication,
+                        arguments = listOf(navArgument("medicationId") { type = NavType.LongType }),
+                    ) { backStackEntry ->
+                        AddMedicationRoute(
+                            container = container,
+                            navController = navController,
+                            medicationId = backStackEntry.arguments?.getLong("medicationId"),
                         )
                     }
                     composable(Routes.ScanMedication) {
@@ -254,6 +276,7 @@ fun RemediosApp(
 private fun AddMedicationRoute(
     container: AppContainer,
     navController: androidx.navigation.NavHostController,
+    medicationId: Long? = null,
 ) {
     val viewModel: MedicationFormViewModel = viewModel(
         factory = AppViewModelFactory {
@@ -261,6 +284,7 @@ private fun AddMedicationRoute(
                 medicationRepository = container.medicationRepository,
                 imageManager = container.imageManager,
                 textRecognizer = container.textRecognizer,
+                medicationId = medicationId,
             )
         },
     )
@@ -303,7 +327,14 @@ private fun AddMedicationRoute(
     }
 
     LaunchedEffect(uiState.savedMedicationId) {
-        if (uiState.savedMedicationId != null) {
+        val savedMedicationId = uiState.savedMedicationId
+        if (savedMedicationId != null) {
+            if (container.settingsRepository.settings.first().liveUpdatesEnabled) {
+                container.reminderScheduler.nextLiveUpdatePayloadForMedication(savedMedicationId)?.let { payload ->
+                    container.liveUpdateManager.startDoseLiveUpdate(payload)
+                    container.reminderScheduler.scheduleLiveUpdateProgressTick(payload)
+                }
+            }
             viewModel.consumeSavedState()
             navController.popBackStack()
         }
@@ -311,10 +342,13 @@ private fun AddMedicationRoute(
 
     AddMedicationScreen(
         uiState = uiState,
+        isEditing = medicationId != null,
         onNameChange = viewModel::updateName,
         onDosageChange = viewModel::updateDosage,
         onFrequencyChange = viewModel::updateFrequency,
-        onTimesChange = { viewModel.updateTimes(parseTimesInput(it)) },
+        onTimesChange = viewModel::updateTimesText,
+        onStartDateChange = viewModel::updateStartDate,
+        onEndDateChange = viewModel::updateEndDate,
         onInstructionsChange = viewModel::updateInstructions,
         onNotesChange = viewModel::updateNotes,
         onManufacturerChange = viewModel::updateManufacturer,
