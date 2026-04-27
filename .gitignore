@@ -5,6 +5,16 @@
 build/
 captures/
 local.properties
+*.env
+.env
+.env.*
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+keystore.properties
+secrets.properties
 app/build/
 app/release/
 app/debug/

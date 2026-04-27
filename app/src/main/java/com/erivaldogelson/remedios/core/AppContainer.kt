@@ -2,6 +2,8 @@ package com.erivaldogelson.remedios.core
 
 import android.content.Context
 import androidx.room.Room
+import com.erivaldogelson.remedios.auth.AuthRepository
+import com.erivaldogelson.remedios.auth.SessionManager
 import com.erivaldogelson.remedios.data.local.AppDatabase
 import com.erivaldogelson.remedios.data.preferences.UserPreferencesRepository
 import com.erivaldogelson.remedios.data.repository.MedicationRepositoryImpl
@@ -9,10 +11,14 @@ import com.erivaldogelson.remedios.data.repository.SettingsRepositoryImpl
 import com.erivaldogelson.remedios.domain.repository.MedicationRepository
 import com.erivaldogelson.remedios.domain.repository.SettingsRepository
 import com.erivaldogelson.remedios.media.MedicationImageManager
+import com.erivaldogelson.remedios.network.ApiClient
+import com.erivaldogelson.remedios.network.ApiService
 import com.erivaldogelson.remedios.notifications.MedicationLiveUpdateManager
 import com.erivaldogelson.remedios.notifications.ReminderScheduler
 import com.erivaldogelson.remedios.ocr.MedicationOcrParser
 import com.erivaldogelson.remedios.ocr.MedicationTextRecognizer
+import com.erivaldogelson.remedios.security.DeviceIntegrityChecker
+import com.erivaldogelson.remedios.security.SecurePrefsManager
 import com.erivaldogelson.remedios.widgets.MedicationWidgetProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,6 +31,11 @@ interface AppContainer {
     val textRecognizer: MedicationTextRecognizer
     val liveUpdateManager: MedicationLiveUpdateManager
     val reminderScheduler: ReminderScheduler
+    val securePrefsManager: SecurePrefsManager
+    val deviceIntegrityChecker: DeviceIntegrityChecker
+    val sessionManager: SessionManager
+    val apiService: ApiService
+    val authRepository: AuthRepository
     suspend fun bootstrap()
 }
 
@@ -43,6 +54,22 @@ class DefaultAppContainer(
     private val preferencesRepository by lazy { UserPreferencesRepository(context) }
     private val ocrParser by lazy { MedicationOcrParser() }
 
+    override val securePrefsManager: SecurePrefsManager by lazy { SecurePrefsManager(context) }
+    override val deviceIntegrityChecker: DeviceIntegrityChecker by lazy { DeviceIntegrityChecker(context) }
+    override val sessionManager: SessionManager by lazy { SessionManager(securePrefsManager) }
+    override val apiService: ApiService by lazy {
+        ApiClient.create(
+            tokenProvider = sessionManager,
+            authFailureHandler = sessionManager,
+        )
+    }
+    override val authRepository: AuthRepository by lazy {
+        AuthRepository(
+            apiService = apiService,
+            sessionManager = sessionManager,
+            deviceIntegrityChecker = deviceIntegrityChecker,
+        )
+    }
     override val imageManager: MedicationImageManager by lazy { MedicationImageManager(context) }
     override val textRecognizer: MedicationTextRecognizer by lazy {
         MedicationTextRecognizer(context, ocrParser)

@@ -1,8 +1,25 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
 }
+
+val secureLocalProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use(::load)
+    }
+}
+
+fun secureConfig(name: String, defaultValue: String): String =
+    providers.environmentVariable(name).orNull
+        ?: providers.gradleProperty(name).orNull
+        ?: secureLocalProperties.getProperty(name)
+        ?: defaultValue
+
+fun buildConfigString(value: String): String = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
 android {
     namespace = "com.erivaldogelson.remedios"
@@ -13,8 +30,8 @@ android {
         applicationId = "com.erivaldogelson.remedios"
         minSdk = 26
         targetSdk = 36
-        versionCode = 12
-        versionName = "0.1.11"
+        versionCode = 13
+        versionName = "0.1.12"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -22,7 +39,28 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            buildConfigField(
+                "String",
+                "API_BASE_URL",
+                buildConfigString(secureConfig("RELEASE_API_BASE_URL", "https://api.example.com/")),
+            )
+            buildConfigField(
+                "String",
+                "API_HOST",
+                buildConfigString(secureConfig("RELEASE_API_HOST", "api.example.com")),
+            )
+            buildConfigField(
+                "String",
+                "CERTIFICATE_PINS",
+                buildConfigString(secureConfig("RELEASE_CERTIFICATE_PINS", "")),
+            )
+            buildConfigField(
+                "String",
+                "EXPECTED_SIGNING_CERT_SHA256",
+                buildConfigString(secureConfig("RELEASE_SIGNING_CERT_SHA256", "")),
+            )
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -31,6 +69,26 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            buildConfigField(
+                "String",
+                "API_BASE_URL",
+                buildConfigString(secureConfig("DEBUG_API_BASE_URL", "https://debug-api.example.com/")),
+            )
+            buildConfigField(
+                "String",
+                "API_HOST",
+                buildConfigString(secureConfig("DEBUG_API_HOST", "debug-api.example.com")),
+            )
+            buildConfigField(
+                "String",
+                "CERTIFICATE_PINS",
+                buildConfigString(secureConfig("DEBUG_CERTIFICATE_PINS", "")),
+            )
+            buildConfigField(
+                "String",
+                "EXPECTED_SIGNING_CERT_SHA256",
+                buildConfigString(secureConfig("DEBUG_SIGNING_CERT_SHA256", "")),
+            )
         }
     }
 
@@ -75,6 +133,7 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.work.runtime.ktx)
 
     implementation(libs.androidx.camera.core)
@@ -85,6 +144,10 @@ dependencies {
     implementation(libs.mlkit.text.recognition)
     implementation(libs.coil.compose)
     implementation(libs.google.material)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

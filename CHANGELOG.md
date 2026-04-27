@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.12 - 2026-04-27
+
+- adiciona camada modular de seguranca com SecurePrefsManager, AuthRepository, SessionManager e ApiClient
+- ativa R8/ProGuard e shrinkResources no release com regras para Retrofit, OkHttp, Gson, Firebase, Room e ML Kit
+- adiciona HTTPS obrigatorio, certificate pinning configuravel, interceptor JWT e tratamento de sessao expirada
+- adiciona verificacoes basicas de ambiente inseguro, assinatura de APK, root, emulador e debugger
+- bloqueia arquivos sensiveis no .gitignore e separa configuracoes por ambiente via BuildConfig/local.properties/variaveis
+
 ## 0.1.11 - 2026-04-24
 
 - corrige o onboarding aparecendo novamente ao abrir o app aguardando as configurações reais antes de decidir a rota inicial
