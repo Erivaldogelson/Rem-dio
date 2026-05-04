@@ -5,7 +5,7 @@ package com.erivaldogelson.remedios.ui.screens
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,15 +48,18 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -82,6 +85,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 
 @Composable
 fun HistoryScreen(
@@ -141,62 +145,94 @@ fun SettingsScreen(
 ) {
     var selectedSection by remember { mutableStateOf<SettingsSection?>(null) }
     var showLanguageSheet by remember { mutableStateOf(false) }
+    var backPreviewProgress by remember { mutableFloatStateOf(0f) }
+    val previewOffset = with(LocalDensity.current) { 96.dp.toPx() }
     val text = settingsText(settings.languageTag)
 
-    BackHandler(enabled = selectedSection != null && !showLanguageSheet) {
-        selectedSection = null
+    PredictiveBackHandler(enabled = selectedSection != null && !showLanguageSheet) { backEvents ->
+        try {
+            backEvents.collect { event ->
+                backPreviewProgress = event.progress
+            }
+            selectedSection = null
+        } finally {
+            backPreviewProgress = 0f
+        }
     }
 
-    when (selectedSection) {
-        SettingsSection.APPEARANCE -> SettingsSubpage(
-            title = text.appearance,
-            subtitle = text.settings,
-            onBack = { selectedSection = null },
-            modifier = modifier,
-        ) {
-            AppearanceSettingsContent(
-                settings = settings,
-                onThemeModeChange = onThemeModeChange,
-                onDynamicColorChange = onDynamicColorChange,
-                onNavigationPillTransparencyChange = onNavigationPillTransparencyChange,
+    Box(modifier = modifier.fillMaxSize()) {
+        if (selectedSection != null && backPreviewProgress > 0f) {
+            SettingsHome(
+                onOpenAppearance = { selectedSection = SettingsSection.APPEARANCE },
+                onOpenReminders = { selectedSection = SettingsSection.REMINDERS },
+                onOpenAbout = { selectedSection = SettingsSection.ABOUT },
                 onOpenLanguage = { showLanguageSheet = true },
-            )
-        }
-
-        SettingsSection.REMINDERS -> SettingsSubpage(
-            title = text.reminders,
-            subtitle = "Now Bar, feedback e permissões",
-            onBack = { selectedSection = null },
-            modifier = modifier,
-        ) {
-            ReminderSettingsContent(
-                settings = settings,
-                onLiveUpdatesChange = onLiveUpdatesChange,
-                onHapticsChange = onHapticsChange,
-                onNowBarColorChange = onNowBarColorChange,
-                onNowBarToneChange = onNowBarToneChange,
                 onOpenPermissions = onOpenPermissions,
+                languageTag = settings.languageTag,
+                modifier = Modifier.graphicsLayer {
+                    alpha = backPreviewProgress
+                    val previewScale = 0.96f + backPreviewProgress * 0.04f
+                    scaleX = previewScale
+                    scaleY = previewScale
+                },
             )
         }
-
-        SettingsSection.ABOUT -> SettingsSubpage(
-            title = text.about,
-            subtitle = "Remédios",
-            onBack = { selectedSection = null },
-            modifier = modifier,
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    translationX = previewOffset * backPreviewProgress
+                    alpha = 1f - backPreviewProgress * 0.18f
+                },
         ) {
-            AboutSettingsContent()
-        }
+            when (selectedSection) {
+                SettingsSection.APPEARANCE -> SettingsSubpage(
+                    title = text.appearance,
+                    subtitle = text.settings,
+                    onBack = { selectedSection = null },
+                ) {
+                    AppearanceSettingsContent(
+                        settings = settings,
+                        onThemeModeChange = onThemeModeChange,
+                        onDynamicColorChange = onDynamicColorChange,
+                        onNavigationPillTransparencyChange = onNavigationPillTransparencyChange,
+                        onOpenLanguage = { showLanguageSheet = true },
+                    )
+                }
 
-        null -> SettingsHome(
-            onOpenAppearance = { selectedSection = SettingsSection.APPEARANCE },
-            onOpenReminders = { selectedSection = SettingsSection.REMINDERS },
-            onOpenAbout = { selectedSection = SettingsSection.ABOUT },
-            onOpenLanguage = { showLanguageSheet = true },
-            onOpenPermissions = onOpenPermissions,
-            languageTag = settings.languageTag,
-            modifier = modifier,
-        )
+                SettingsSection.REMINDERS -> SettingsSubpage(
+                    title = text.reminders,
+                    subtitle = "Now Bar, feedback e permissões",
+                    onBack = { selectedSection = null },
+                ) {
+                    ReminderSettingsContent(
+                        settings = settings,
+                        onLiveUpdatesChange = onLiveUpdatesChange,
+                        onHapticsChange = onHapticsChange,
+                        onNowBarColorChange = onNowBarColorChange,
+                        onNowBarToneChange = onNowBarToneChange,
+                        onOpenPermissions = onOpenPermissions,
+                    )
+                }
+
+                SettingsSection.ABOUT -> SettingsSubpage(
+                    title = text.about,
+                    subtitle = "Remédios",
+                    onBack = { selectedSection = null },
+                ) {
+                    AboutSettingsContent()
+                }
+
+                null -> SettingsHome(
+                    onOpenAppearance = { selectedSection = SettingsSection.APPEARANCE },
+                    onOpenReminders = { selectedSection = SettingsSection.REMINDERS },
+                    onOpenAbout = { selectedSection = SettingsSection.ABOUT },
+                    onOpenLanguage = { showLanguageSheet = true },
+                    onOpenPermissions = onOpenPermissions,
+                    languageTag = settings.languageTag,
+                )
+            }
+        }
     }
 
     if (showLanguageSheet) {

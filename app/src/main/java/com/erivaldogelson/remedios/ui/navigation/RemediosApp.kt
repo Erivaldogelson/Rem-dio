@@ -5,6 +5,10 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
@@ -111,6 +115,30 @@ fun RemediosApp(
                     navController = navController,
                     startDestination = Routes.Splash,
                     modifier = Modifier.fillMaxSize(),
+                    enterTransition = {
+                        slideIntoContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(PageTransitionMillis),
+                        ) + fadeIn(animationSpec = tween(PageTransitionMillis / 2))
+                    },
+                    exitTransition = {
+                        slideOutOfContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(PageTransitionMillis),
+                        ) + fadeOut(animationSpec = tween(PageTransitionMillis / 2))
+                    },
+                    popEnterTransition = {
+                        slideIntoContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(PageTransitionMillis),
+                        ) + fadeIn(animationSpec = tween(PageTransitionMillis / 2))
+                    },
+                    popExitTransition = {
+                        slideOutOfContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(PageTransitionMillis),
+                        ) + fadeOut(animationSpec = tween(PageTransitionMillis / 2))
+                    },
                 ) {
                     composable(Routes.Splash) {
                         SplashScreen(
@@ -313,6 +341,8 @@ private fun resolvedLanguage(languageTag: String): String =
     } else {
         java.util.Locale.forLanguageTag(languageTag).language
     }
+
+private const val PageTransitionMillis = 280
 
 @Composable
 private fun AddMedicationRoute(
