@@ -18,8 +18,6 @@ import androidx.core.content.ContextCompat
 import com.erivaldogelson.remedios.MainActivity
 import com.erivaldogelson.remedios.R
 import com.erivaldogelson.remedios.data.preferences.UserPreferencesRepository
-import com.erivaldogelson.remedios.domain.model.TreatmentProgressSnapshot
-import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlinx.coroutines.runBlocking
@@ -42,26 +40,16 @@ class MedicationLiveUpdateManager(
         notificationManager.createNotificationChannel(channel)
     }
 
-    fun showDoseReminder(payload: DoseLiveUpdatePayload) {
-        if (!canPostNotifications()) return
-        ensureChannel()
-        notificationManager.notify(payload.notificationId, buildDoseReminderNotification(payload))
+    fun startDoseLiveUpdate(payload: DoseLiveUpdatePayload) {
+        postDoseLiveUpdate(payload)
     }
 
-    fun updateDoseReminder(payload: DoseLiveUpdatePayload) {
-        showDoseReminder(payload)
+    fun updateDoseLiveUpdateProgress(payload: DoseLiveUpdatePayload) {
+        postDoseLiveUpdate(payload)
     }
 
     fun completeDoseLiveUpdate(payload: DoseLiveUpdatePayload) {
-        cancelDoseReminder(payload.notificationId)
-    }
-
-    fun cancelDoseReminder(payload: DoseLiveUpdatePayload) {
-        cancelDoseReminder(payload.notificationId)
-    }
-
-    fun cancelDoseReminder(notificationId: Int) {
-        notificationManager.cancel(notificationId)
+        cancelDoseLiveUpdate(payload.notificationId)
     }
 
     fun cancelDoseLiveUpdate(payload: DoseLiveUpdatePayload) {
@@ -70,69 +58,39 @@ class MedicationLiveUpdateManager(
 
     fun cancelDoseLiveUpdate(notificationId: Int) {
         notificationManager.cancel(notificationId)
-        stopTreatmentLiveUpdate()
     }
 
-    fun startTreatmentLiveUpdate(snapshot: TreatmentProgressSnapshot) {
-        startTreatmentLiveUpdate(TreatmentLiveUpdatePayload.from(snapshot))
-    }
-
-    fun updateTreatmentLiveUpdate(snapshot: TreatmentProgressSnapshot) {
-        startTreatmentLiveUpdate(TreatmentLiveUpdatePayload.from(snapshot))
-    }
-
-    fun startTreatmentLiveUpdate(payload: TreatmentLiveUpdatePayload) {
-        if (payload.isComplete) {
-            stopTreatmentLiveUpdate(payload.medicationId)
-            return
-        }
+    private fun postDoseLiveUpdate(payload: DoseLiveUpdatePayload) {
+        if (!canPostNotifications()) return
         ensureChannel()
-        val intent = DoseLiveService.intent(context, DoseLiveService.ACTION_START, payload)
-        runCatching {
-            ContextCompat.startForegroundService(context, intent)
-        }.onFailure {
-            if (canPostNotifications()) {
-                notificationManager.notify(
-                    DoseLiveService.FOREGROUND_NOTIFICATION_ID,
-                    buildTreatmentLiveNotification(payload),
-                )
-            }
-        }
-    }
 
-    fun stopTreatmentLiveUpdate(medicationId: Long = -1L) {
-        val intent = DoseLiveService.stopIntent(context, medicationId)
-        runCatching { context.startService(intent) }
-        notificationManager.cancel(DoseLiveService.FOREGROUND_NOTIFICATION_ID)
-    }
-
-    fun buildTreatmentLiveNotification(payload: TreatmentLiveUpdatePayload): Notification =
-        if (Build.VERSION.SDK_INT >= 36) {
-            buildAndroid16TreatmentLiveNotification(payload)
+        val notification = if (Build.VERSION.SDK_INT >= 36) {
+            buildAndroid16LiveUpdate(payload)
         } else {
-            buildCompatTreatmentLiveNotification(payload)
+            buildFallbackNotification(payload)
         }
+        notificationManager.notify(payload.notificationId, notification)
+    }
 
     @RequiresApi(36)
-    private fun buildAndroid16TreatmentLiveNotification(payload: TreatmentLiveUpdatePayload): Notification {
-        val accent = notificationAccentColor(payload.accentColor)
+    private fun buildAndroid16LiveUpdate(payload: DoseLiveUpdatePayload): Notification {
+        val accent = notificationAccentColor()
+        val progress = payload.progressPercent()
         val icon = Icon.createWithResource(context, R.drawable.ic_pill)
         val style = Notification.ProgressStyle()
-            .setProgress(payload.dosesTaken.coerceAtLeast(0))
+            .setProgress(progress)
             .setStyledByProgress(true)
             .setProgressStartIcon(icon)
             .setProgressTrackerIcon(icon)
             .setProgressEndIcon(icon)
-            .addProgressSegment(
-                Notification.ProgressStyle.Segment(payload.totalDoses.coerceAtLeast(1)).setColor(accent),
-            )
+            .addProgressSegment(Notification.ProgressStyle.Segment(100).setColor(accent))
 
         return Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_pill)
             .setColor(accent)
             .setColorized(false)
-            .setContentTitle("Tratamento em progresso")
-            .setContentText(payload.treatmentContentText())
+            .setContentTitle(payload.medicationName.ifBlank { "Próxima dose" })
+            .setContentText("Dose ${payload.dosage} às ${payload.timeLabel()}")
             .setSubText("Now Bar")
             .setContentIntent(buildContentIntent())
             .setPriority(Notification.PRIORITY_HIGH)
@@ -140,74 +98,58 @@ class MedicationLiveUpdateManager(
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setAutoCancel(false)
-            .setShowWhen(false)
-            .setShortCriticalText("${payload.progressPercent}%")
+            .setWhen(payload.triggerAt.toEpochMillis())
+            .setShowWhen(true)
+            .setUsesChronometer(payload.triggerAt.isAfter(LocalDateTime.now()))
+            .setChronometerCountDown(true)
+            .setShortCriticalText(payload.chipText())
             .setStyle(style)
             .addExtras(Bundle().apply { putBoolean(EXTRA_REQUEST_PROMOTED_ONGOING, true) })
+            .addAction(buildPlatformAction(payload, ACTION_TAKE, R.string.action_take_now))
+            .addAction(buildPlatformAction(payload, ACTION_SNOOZE, R.string.action_snooze))
+            .addAction(buildPlatformAction(payload, ACTION_SKIP, R.string.action_skip))
             .build()
     }
 
-    private fun buildCompatTreatmentLiveNotification(payload: TreatmentLiveUpdatePayload): Notification =
-        NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_pill)
-            .setColor(notificationAccentColor(payload.accentColor))
-            .setColorized(false)
-            .setContentTitle("Tratamento em progresso")
-            .setContentText(payload.treatmentContentText())
-            .setSubText("Now Bar")
-            .setContentIntent(buildContentIntent())
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
-            .setAutoCancel(false)
-            .setOnlyAlertOnce(true)
-            .setOngoing(true)
-            .setShowWhen(false)
-            .setProgress(payload.totalDoses.coerceAtLeast(1), payload.dosesTaken.coerceAtLeast(0), false)
-            .setRequestPromotedOngoing(true)
-            .setShortCriticalText("${payload.progressPercent}%")
-            .setStyle(
-                NotificationCompat.BigTextStyle().bigText(
-                    "${payload.treatmentContentText()} • Progresso: ${payload.progressPercent}%",
-                ),
-            )
-            .build()
-
-    private fun buildDoseReminderNotification(payload: DoseLiveUpdatePayload): Notification =
+    private fun buildFallbackNotification(payload: DoseLiveUpdatePayload): Notification =
         NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_pill)
             .setColor(notificationAccentColor())
             .setColorized(false)
-            .setContentTitle("Hora de tomar ${payload.medicationName}")
-            .setContentText(payload.doseReminderContentText())
-            .setSubText("Lembrete")
+            .setContentTitle(payload.medicationName.ifBlank { "Próxima dose" })
+            .setContentText("Dose ${payload.dosage} às ${payload.timeLabel()}")
+            .setSubText("Live Update")
             .setContentIntent(buildContentIntent())
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setAutoCancel(false)
             .setOnlyAlertOnce(true)
-            .setOngoing(false)
+            .setOngoing(true)
             .setWhen(payload.triggerAt.toEpochMillis())
             .setShowWhen(true)
-            .setUsesChronometer(true)
-            .setChronometerCountDown(payload.triggerAt.isAfter(LocalDateTime.now()))
+            .setUsesChronometer(payload.triggerAt.isAfter(LocalDateTime.now()))
+            .setChronometerCountDown(true)
             .setStyle(
                 NotificationCompat.BigTextStyle().bigText(
-                    "${payload.doseReminderContentText()}. Toque em Tomei para iniciar o acompanhamento do tratamento.",
+                    "Registre a dose de ${payload.medicationName}, adie por 15 minutos ou ignore se necessário.",
                 ),
             )
+            .setProgress(100, payload.progressPercent(), false)
+            .setRequestPromotedOngoing(true)
+            .setShortCriticalText(payload.chipText())
             .addAction(0, context.getString(R.string.action_take_now), actionPendingIntent(payload, ACTION_TAKE))
             .addAction(0, context.getString(R.string.action_snooze), actionPendingIntent(payload, ACTION_SNOOZE))
             .addAction(0, context.getString(R.string.action_skip), actionPendingIntent(payload, ACTION_SKIP))
             .build()
 
-    private fun notificationAccentColor(fallbackColor: Long = 0xFFAA8CFF): Int =
+    private fun notificationAccentColor(): Int =
         runCatching {
             runBlocking {
                 val settings = preferencesRepository.settingsValue()
                 applyTone(settings.nowBarColor, settings.nowBarTone)
             }
         }.getOrElse {
-            applyTone(fallbackColor, 50)
+            ContextCompat.getColor(context, R.color.notification_accent)
         }
 
     private fun applyTone(color: Long, tone: Int): Int {
@@ -221,6 +163,18 @@ class MedicationLiveUpdateManager(
         fun blend(channel: Int): Int = (channel + ((target - channel) * fraction)).toInt().coerceIn(0, 255)
         return android.graphics.Color.rgb(blend(red), blend(green), blend(blue))
     }
+
+    @RequiresApi(23)
+    private fun buildPlatformAction(
+        payload: DoseLiveUpdatePayload,
+        action: String,
+        titleRes: Int,
+    ): Notification.Action =
+        Notification.Action.Builder(
+            Icon.createWithResource(context, R.drawable.ic_pill),
+            context.getString(titleRes),
+            actionPendingIntent(payload, action),
+        ).build()
 
     private fun buildContentIntent(): PendingIntent {
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -248,23 +202,6 @@ class MedicationLiveUpdateManager(
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-    }
-
-    private fun TreatmentLiveUpdatePayload.treatmentContentText(): String =
-        "Dose $dosesTaken de $totalDoses tomada • Próxima dose: ${nextDoseLabel()}"
-
-    private fun DoseLiveUpdatePayload.doseReminderContentText(): String =
-        "$dosage às ${timeLabel()} • ${remainingLabel()}"
-
-    private fun DoseLiveUpdatePayload.remainingLabel(now: LocalDateTime = LocalDateTime.now()): String {
-        val minutes = Duration.between(now, triggerAt).toMinutes()
-        return when {
-            minutes > 1 -> "faltam $minutes min"
-            minutes == 1L -> "falta 1 min"
-            minutes >= 0 -> "é agora"
-            now.isBefore(expiresAt) -> "em andamento"
-            else -> "encerrada"
-        }
     }
 
     private fun canPostNotifications(): Boolean {

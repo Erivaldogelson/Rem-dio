@@ -35,6 +35,14 @@ class ReminderScheduler(
                 expiresAt = reminder.expiresAt,
             )
             if (reminder.expiresAt > now) {
+                val liveStartAt = reminder.triggerAt.minusMinutes(LIVE_UPDATE_START_WINDOW_MINUTES.toLong())
+                if (reminder.triggerAt > now) {
+                    scheduleReminderAlarm(
+                        payload = payload,
+                        event = EVENT_LIVE_START,
+                        fireAt = if (liveStartAt.isBefore(now)) now.plusSeconds(2) else liveStartAt,
+                    )
+                }
                 scheduleReminderAlarm(
                     payload = payload,
                     event = EVENT_DUE,
@@ -93,6 +101,7 @@ class ReminderScheduler(
         const val EVENT_PROGRESS_TICK = "event_progress_tick"
         const val EVENT_DUE = "event_due"
         const val EVENT_EXPIRE = "event_expire"
+        private const val LIVE_UPDATE_START_WINDOW_MINUTES = 15
         private const val LIVE_UPDATE_PROGRESS_TICK_MINUTES = 5
     }
 

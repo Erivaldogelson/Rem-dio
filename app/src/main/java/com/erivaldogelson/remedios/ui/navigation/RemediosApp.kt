@@ -55,6 +55,7 @@ import com.erivaldogelson.remedios.ui.viewmodel.MedicationFormViewModel
 import com.erivaldogelson.remedios.ui.viewmodel.MedicationListViewModel
 import com.erivaldogelson.remedios.ui.viewmodel.OnboardingViewModel
 import com.erivaldogelson.remedios.ui.viewmodel.SettingsViewModel
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun RemediosApp(
@@ -142,7 +143,6 @@ fun RemediosApp(
                             factory = AppViewModelFactory {
                                 DashboardViewModel(
                                     medicationRepository = container.medicationRepository,
-                                    settingsRepository = container.settingsRepository,
                                     reminderScheduler = container.reminderScheduler,
                                     liveUpdateManager = container.liveUpdateManager,
                                 )
@@ -267,7 +267,6 @@ fun RemediosApp(
                             factory = AppViewModelFactory {
                                 DashboardViewModel(
                                     medicationRepository = container.medicationRepository,
-                                    settingsRepository = container.settingsRepository,
                                     reminderScheduler = container.reminderScheduler,
                                     liveUpdateManager = container.liveUpdateManager,
                                 )
@@ -372,6 +371,12 @@ private fun AddMedicationRoute(
     LaunchedEffect(uiState.savedMedicationId) {
         val savedMedicationId = uiState.savedMedicationId
         if (savedMedicationId != null) {
+            if (container.settingsRepository.settings.first().liveUpdatesEnabled) {
+                container.reminderScheduler.nextLiveUpdatePayloadForMedication(savedMedicationId)?.let { payload ->
+                    container.liveUpdateManager.startDoseLiveUpdate(payload)
+                    container.reminderScheduler.scheduleLiveUpdateProgressTick(payload)
+                }
+            }
             viewModel.consumeSavedState()
             navController.popBackStack()
         }

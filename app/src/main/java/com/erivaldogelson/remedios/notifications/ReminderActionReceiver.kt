@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import com.erivaldogelson.remedios.core.appContainer
 import com.erivaldogelson.remedios.domain.model.ReminderAction
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
 class ReminderActionReceiver : BroadcastReceiver() {
@@ -31,13 +30,8 @@ class ReminderActionReceiver : BroadcastReceiver() {
                 action = action,
                 scheduledAt = payload.triggerAt,
             )
-            container.liveUpdateManager.cancelDoseReminder(payload.notificationId)
-            if (action == ReminderAction.TAKE && container.settingsRepository.settings.first().liveUpdatesEnabled) {
-                container.medicationRepository.treatmentProgressFor(payload.medicationId)?.let { progress ->
-                    container.liveUpdateManager.startTreatmentLiveUpdate(progress)
-                }
-            }
             container.reminderScheduler.scheduleAllExisting()
         }
+        context.appContainer.liveUpdateManager.completeDoseLiveUpdate(payload)
     }
 }

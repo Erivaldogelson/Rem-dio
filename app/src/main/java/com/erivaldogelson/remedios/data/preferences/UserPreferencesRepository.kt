@@ -78,7 +78,7 @@ class UserPreferencesRepository(context: Context) {
     }
 
     suspend fun setNavigationPillTransparency(transparency: Int) = dataStore.edit {
-        it[Keys.navigationPillTransparency] = transparency.coerceIn(0, 55)
+        it[Keys.navigationPillTransparency] = transparency.coerceIn(0, 90)
     }
 
     suspend fun settingsValue(): SettingsSnapshot = settings.first()

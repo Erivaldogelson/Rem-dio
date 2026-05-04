@@ -165,25 +165,24 @@ fun PillBottomNavigation(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val isDark = colorScheme.background.luminance() < 0.5f
-    val alpha = (1f - transparency.coerceIn(0, 55) / 100f).coerceIn(0.45f, 1f)
+    val transparencyFraction = transparency.coerceIn(0, 90) / 100f
+    val alpha = (1f - transparencyFraction).coerceIn(0.1f, 1f)
     val pillColor by animateColorAsState(
-        targetValue = if (isDark) {
-            colorScheme.surfaceVariant.copy(alpha = alpha)
-        } else {
-            colorScheme.surfaceVariant.copy(alpha = alpha)
-        },
+        targetValue = colorScheme.surfaceVariant.copy(alpha = alpha),
         label = "pill_container_color",
     )
     val addColor by animateColorAsState(
         targetValue = if (isDark) {
-            colorScheme.tertiary.copy(alpha = (0.28f + alpha * 0.38f).coerceIn(0.35f, 0.72f))
+            colorScheme.tertiary.copy(alpha = (1f - transparencyFraction * 0.86f).coerceIn(0.22f, 1f))
         } else {
-            colorScheme.tertiary.copy(alpha = (0.16f + alpha * 0.28f).coerceIn(0.28f, 0.52f))
+            colorScheme.tertiary.copy(alpha = (1f - transparencyFraction * 0.82f).coerceIn(0.26f, 1f))
         },
         label = "pill_add_color",
     )
     val selectedColor by animateColorAsState(
-        targetValue = colorScheme.primary.copy(alpha = if (isDark) 0.28f else 0.16f),
+        targetValue = colorScheme.primary.copy(
+            alpha = ((if (isDark) 0.28f else 0.16f) * alpha).coerceAtLeast(if (isDark) 0.06f else 0.04f),
+        ),
         label = "pill_selected_color",
     )
     val iconColor by animateColorAsState(
@@ -195,7 +194,7 @@ fun PillBottomNavigation(
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 16.dp)
-            .padding(top = 6.dp, bottom = 26.dp),
+            .padding(top = 2.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {

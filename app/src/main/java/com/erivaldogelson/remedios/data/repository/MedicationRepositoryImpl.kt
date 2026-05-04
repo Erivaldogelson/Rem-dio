@@ -21,7 +21,6 @@ import com.erivaldogelson.remedios.domain.model.MedicationForm
 import com.erivaldogelson.remedios.domain.model.MedicationSummary
 import com.erivaldogelson.remedios.domain.model.NextDoseSnapshot
 import com.erivaldogelson.remedios.domain.model.ReminderAction
-import com.erivaldogelson.remedios.domain.model.TreatmentProgressSnapshot
 import com.erivaldogelson.remedios.domain.repository.MedicationRepository
 import com.erivaldogelson.remedios.notifications.DoseLiveUpdatePayload
 import kotlinx.coroutines.flow.Flow
@@ -148,27 +147,6 @@ class MedicationRepositoryImpl(
 
     override suspend fun medicationExists(id: Long): Boolean =
         medicationDao.getMedicationById(id) != null
-
-    override suspend fun treatmentProgressFor(medicationId: Long): TreatmentProgressSnapshot? {
-        val medicationWithAssets = medicationDao.getMedicationCards()
-            .firstOrNull { it.medication.id == medicationId }
-            ?: return null
-        val logs = doseLogDao.getLogsForMedication(medicationId)
-        val dosesTaken = logs.count { it.status == DoseStatus.TAKEN }
-        val totalDoses = (medicationWithAssets.medication.quantityRemaining + dosesTaken)
-            .coerceAtLeast(dosesTaken)
-            .coerceAtLeast(1)
-        val nextDose = medicationWithAssets.toNextDose(LocalDateTime.now(clock), logs)
-        return TreatmentProgressSnapshot(
-            medicationId = medicationWithAssets.medication.id,
-            medicationName = medicationWithAssets.medication.name,
-            dosage = medicationWithAssets.medication.dosage,
-            dosesTaken = dosesTaken,
-            totalDoses = totalDoses,
-            nextDoseAt = nextDose?.scheduledAt,
-            accentColor = medicationWithAssets.medication.accentColor,
-        )
-    }
 
     override fun observeHistory(filter: HistoryFilter): Flow<List<DoseLogItemModel>> = combine(
         medicationDao.observeMedicationCards(),

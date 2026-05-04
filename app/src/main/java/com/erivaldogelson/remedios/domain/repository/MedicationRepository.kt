@@ -8,7 +8,6 @@ import com.erivaldogelson.remedios.domain.model.MedicationDetails
 import com.erivaldogelson.remedios.domain.model.MedicationDraft
 import com.erivaldogelson.remedios.domain.model.MedicationSummary
 import com.erivaldogelson.remedios.domain.model.ReminderAction
-import com.erivaldogelson.remedios.domain.model.TreatmentProgressSnapshot
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDateTime
 
@@ -22,7 +21,6 @@ interface MedicationRepository {
     suspend fun upsertMedication(draft: MedicationDraft): Long
     suspend fun deleteMedication(id: Long)
     suspend fun medicationExists(id: Long): Boolean
-    suspend fun treatmentProgressFor(medicationId: Long): TreatmentProgressSnapshot?
     suspend fun recordDoseAction(
         medicationId: Long,
         scheduleId: Long?,

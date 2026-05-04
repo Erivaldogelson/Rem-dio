@@ -439,7 +439,7 @@ private fun AppearanceSettingsContent(
                 Slider(
                     value = settings.navigationPillTransparency.toFloat(),
                     onValueChange = { onNavigationPillTransparencyChange(it.toInt()) },
-                    valueRange = 0f..55f,
+                    valueRange = 0f..90f,
                 )
             }
         }

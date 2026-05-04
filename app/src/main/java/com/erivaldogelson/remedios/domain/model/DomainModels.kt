@@ -146,23 +146,6 @@ data class ActiveReminderSnapshot(
     val progress: Float,
 )
 
-data class TreatmentProgressSnapshot(
-    val medicationId: Long,
-    val medicationName: String,
-    val dosage: String,
-    val dosesTaken: Int,
-    val totalDoses: Int,
-    val nextDoseAt: LocalDateTime?,
-    val accentColor: Long = 0xFFAA8CFF,
-) {
-    val progressPercent: Int =
-        ((dosesTaken.coerceAtLeast(0) * 100f) / totalDoses.coerceAtLeast(1))
-            .toInt()
-            .coerceIn(0, 100)
-
-    val isComplete: Boolean = dosesTaken >= totalDoses.coerceAtLeast(1)
-}
-
 data class SettingsSnapshot(
     val themeMode: AppThemeMode = AppThemeMode.DARK,
     val dynamicColorEnabled: Boolean = true,
