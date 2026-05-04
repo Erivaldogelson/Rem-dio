@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.14 - 2026-05-04
+
+- adiciona controle de transparência da pílula de navegação nas configurações de aparência
+- persiste a transparência da navegação inferior nas preferências do usuário
+- ajusta a barra inferior para respeitar área de navegação do sistema e animar cores/seleção com a nova transparência
+
 ## 0.1.13 - 2026-05-04
 
 - redesenha a navegação inferior no estilo de pílula com três ícones centrais
