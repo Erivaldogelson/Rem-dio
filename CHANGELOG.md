@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.15 - 2026-05-04
+
+- separa o fluxo da Now Bar em dois disparos: lembrete normal da dose e acompanhamento ao vivo após tocar em Tomei
+- adiciona Foreground Service `DoseLiveService` com tipo `health` para manter a notificação contínua do tratamento
+- mostra progresso do tratamento com doses tomadas, total de doses, próxima dose e porcentagem na Live Notification / Now Bar
+- mantém `Notification.ProgressStyle` no Android 16/API 36 e fallback com `NotificationCompat.setProgress`
+- corrige o gesto de voltar nas páginas internas das configurações para retornar ao menu de configurações
+
 ## 0.1.14 - 2026-05-04
 
 - adiciona controle de transparência da pílula de navegação nas configurações de aparência

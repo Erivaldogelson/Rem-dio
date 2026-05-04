@@ -7,15 +7,18 @@ import com.erivaldogelson.remedios.domain.model.DashboardSnapshot
 import com.erivaldogelson.remedios.domain.model.NextDoseSnapshot
 import com.erivaldogelson.remedios.domain.model.ReminderAction
 import com.erivaldogelson.remedios.domain.repository.MedicationRepository
+import com.erivaldogelson.remedios.domain.repository.SettingsRepository
 import com.erivaldogelson.remedios.notifications.DoseLiveUpdatePayload
 import com.erivaldogelson.remedios.notifications.MedicationLiveUpdateManager
 import com.erivaldogelson.remedios.notifications.ReminderScheduler
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class DashboardViewModel(
     private val medicationRepository: MedicationRepository,
+    private val settingsRepository: SettingsRepository,
     private val reminderScheduler: ReminderScheduler,
     private val liveUpdateManager: MedicationLiveUpdateManager,
 ) : ViewModel() {
@@ -49,7 +52,11 @@ class DashboardViewModel(
                     scheduledAt = dose.scheduledAt,
                 )
             }
-            payload?.let(liveUpdateManager::completeDoseLiveUpdate)
+            payload?.let(liveUpdateManager::cancelDoseReminder)
+            if (action == ReminderAction.TAKE && settingsRepository.settings.first().liveUpdatesEnabled) {
+                val medicationId = activeReminder?.medicationId ?: dose?.medicationId ?: return@launch
+                medicationRepository.treatmentProgressFor(medicationId)?.let(liveUpdateManager::startTreatmentLiveUpdate)
+            }
             reminderScheduler.scheduleAllExisting()
         }
     }

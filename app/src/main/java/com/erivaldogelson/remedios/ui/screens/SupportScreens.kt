@@ -5,6 +5,7 @@ package com.erivaldogelson.remedios.ui.screens
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -141,6 +142,10 @@ fun SettingsScreen(
     var selectedSection by remember { mutableStateOf<SettingsSection?>(null) }
     var showLanguageSheet by remember { mutableStateOf(false) }
     val text = settingsText(settings.languageTag)
+
+    BackHandler(enabled = selectedSection != null && !showLanguageSheet) {
+        selectedSection = null
+    }
 
     when (selectedSection) {
         SettingsSection.APPEARANCE -> SettingsSubpage(

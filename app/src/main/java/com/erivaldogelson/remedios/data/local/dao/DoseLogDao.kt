@@ -12,7 +12,9 @@ interface DoseLogDao {
     @Query("SELECT * FROM dose_logs ORDER BY scheduledAt DESC")
     fun observeLogs(): Flow<List<DoseLogEntity>>
 
+    @Query("SELECT * FROM dose_logs WHERE medicationId = :medicationId ORDER BY scheduledAt DESC")
+    suspend fun getLogsForMedication(medicationId: Long): List<DoseLogEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLog(entity: DoseLogEntity): Long
 }
-
