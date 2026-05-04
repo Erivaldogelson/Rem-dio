@@ -84,6 +84,7 @@ fun RemediosApp(
                         items = bottomItems,
                         addItem = addItem,
                         selectedRoute = currentRoute.orEmpty(),
+                        transparency = settings.navigationPillTransparency,
                         onSelect = { item ->
                             if (item.route == Routes.Today) {
                                 val popped = navController.popBackStack(Routes.Today, inclusive = false)
@@ -254,6 +255,7 @@ fun RemediosApp(
                             onLanguageChange = viewModel::setLanguageTag,
                             onNowBarColorChange = viewModel::setNowBarColor,
                             onNowBarToneChange = viewModel::setNowBarTone,
+                            onNavigationPillTransparencyChange = viewModel::setNavigationPillTransparency,
                             onOpenPermissions = { navController.navigate(Routes.Permissions) },
                         )
                     }

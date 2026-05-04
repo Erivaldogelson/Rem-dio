@@ -1,5 +1,12 @@
 package com.erivaldogelson.remedios.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -15,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -50,6 +58,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -150,28 +159,58 @@ fun PillBottomNavigation(
     items: List<BottomBarItem>,
     addItem: BottomBarItem,
     selectedRoute: String,
+    transparency: Int,
     onSelect: (BottomBarItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val isDark = colorScheme.background.luminance() < 0.5f
+    val alpha = (1f - transparency.coerceIn(0, 55) / 100f).coerceIn(0.45f, 1f)
+    val pillColor by animateColorAsState(
+        targetValue = if (isDark) {
+            colorScheme.surfaceVariant.copy(alpha = alpha)
+        } else {
+            colorScheme.surfaceVariant.copy(alpha = alpha)
+        },
+        label = "pill_container_color",
+    )
+    val addColor by animateColorAsState(
+        targetValue = if (isDark) {
+            colorScheme.tertiary.copy(alpha = (0.28f + alpha * 0.38f).coerceIn(0.35f, 0.72f))
+        } else {
+            colorScheme.tertiary.copy(alpha = (0.16f + alpha * 0.28f).coerceIn(0.28f, 0.52f))
+        },
+        label = "pill_add_color",
+    )
+    val selectedColor by animateColorAsState(
+        targetValue = colorScheme.primary.copy(alpha = if (isDark) 0.28f else 0.16f),
+        label = "pill_selected_color",
+    )
+    val iconColor by animateColorAsState(
+        targetValue = colorScheme.onSurface,
+        label = "pill_icon_color",
+    )
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 22.dp, vertical = 14.dp),
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp)
+            .padding(top = 6.dp, bottom = 26.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Surface(
             modifier = Modifier
-                .height(74.dp)
+                .height(70.dp)
                 .weight(1f, fill = false)
-                .widthIn(min = 230.dp, max = 330.dp),
-            color = Color(0xFFF4EEF8),
+                .widthIn(min = 214.dp, max = 370.dp),
+            color = pillColor,
             shape = RoundedCornerShape(64.dp),
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 22.dp, vertical = 10.dp),
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -180,15 +219,19 @@ fun PillBottomNavigation(
                     NavigationItem(
                         item = item,
                         selected = selected,
+                        selectedColor = selectedColor,
+                        contentColor = iconColor,
                         onClick = { onSelect(item) },
                     )
                 }
             }
         }
-        Spacer(Modifier.width(16.dp))
+        Spacer(Modifier.width(12.dp))
         AddNavigationItem(
             item = addItem,
             selected = addItem.route == selectedRoute,
+            containerColor = addColor,
+            contentColor = iconColor,
             onClick = { onSelect(addItem) },
         )
     }
@@ -198,19 +241,30 @@ fun PillBottomNavigation(
 private fun NavigationItem(
     item: BottomBarItem,
     selected: Boolean,
+    selectedColor: Color,
+    contentColor: Color,
     onClick: () -> Unit,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val hapticsEnabled = LocalRemediosHapticsEnabled.current
+    val itemWidth by animateDpAsState(
+        targetValue = if (selected) 118.dp else 52.dp,
+        label = "pill_item_width",
+    )
     val iconScale by animateFloatAsState(
         targetValue = if (selected) 1.08f else 1f,
         label = "pill_icon_scale",
     )
+    val background by animateColorAsState(
+        targetValue = if (selected) selectedColor else Color.Transparent,
+        label = "pill_item_background",
+    )
     Box(
         modifier = Modifier
-            .size(54.dp)
+            .width(itemWidth)
+            .height(54.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(if (selected) Color(0xFFE8DDF8) else Color.Transparent)
+            .background(background)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -221,17 +275,39 @@ private fun NavigationItem(
                     onClick()
                 },
             )
-            .padding(12.dp),
+            .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = item.label,
-            tint = Color(0xFF202026),
-            modifier = Modifier
-                .size(31.dp)
-                .scale(iconScale),
-        )
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = item.icon,
+                contentDescription = item.label,
+                tint = contentColor,
+                modifier = Modifier
+                    .size(29.dp)
+                    .scale(iconScale),
+            )
+            AnimatedVisibility(
+                visible = selected,
+                enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
+                exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(Modifier.width(7.dp))
+                    Text(
+                        text = item.label,
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                        color = contentColor,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -239,6 +315,8 @@ private fun NavigationItem(
 private fun AddNavigationItem(
     item: BottomBarItem,
     selected: Boolean,
+    containerColor: Color,
+    contentColor: Color,
     onClick: () -> Unit,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
@@ -249,10 +327,10 @@ private fun AddNavigationItem(
     )
     Box(
         modifier = Modifier
-            .size(74.dp)
+            .size(70.dp)
             .scale(scale)
             .clip(RoundedCornerShape(29.dp))
-            .background(Color(0xFFFFD7E4))
+            .background(containerColor)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -268,8 +346,8 @@ private fun AddNavigationItem(
         Icon(
             imageVector = item.icon,
             contentDescription = item.label,
-            tint = Color(0xFF202026),
-            modifier = Modifier.size(36.dp),
+            tint = contentColor,
+            modifier = Modifier.size(35.dp),
         )
     }
 }

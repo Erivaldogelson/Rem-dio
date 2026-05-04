@@ -155,4 +155,5 @@ data class SettingsSnapshot(
     val languageTag: String = "system",
     val nowBarColor: Long = 0xFFAA8CFF,
     val nowBarTone: Int = 50,
+    val navigationPillTransparency: Int = 8,
 )

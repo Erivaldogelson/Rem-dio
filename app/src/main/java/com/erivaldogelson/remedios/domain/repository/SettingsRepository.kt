@@ -14,4 +14,5 @@ interface SettingsRepository {
     suspend fun setLanguageTag(languageTag: String)
     suspend fun setNowBarColor(color: Long)
     suspend fun setNowBarTone(tone: Int)
+    suspend fun setNavigationPillTransparency(transparency: Int)
 }

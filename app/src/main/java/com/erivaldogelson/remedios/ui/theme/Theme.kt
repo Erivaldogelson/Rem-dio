@@ -11,10 +11,14 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import com.erivaldogelson.remedios.domain.model.AppThemeMode
 import com.erivaldogelson.remedios.domain.model.SettingsSnapshot
 
@@ -70,6 +74,7 @@ fun RemediosTheme(
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
+    val view = LocalView.current
     val shouldUseDark = when (settings.themeMode) {
         AppThemeMode.LIGHT -> false
         AppThemeMode.DARK -> true
@@ -96,8 +101,18 @@ fun RemediosTheme(
         onPrimary = if (shouldUseDark) Ink else Color.White,
     )
 
-    @Suppress("UNUSED_EXPRESSION")
-    (context as? Activity)
+    if (!view.isInEditMode) {
+        SideEffect {
+            (context as? Activity)?.window?.let { window ->
+                window.statusBarColor = Color.Transparent.toArgb()
+                window.navigationBarColor = Color.Transparent.toArgb()
+                WindowCompat.getInsetsController(window, view).apply {
+                    isAppearanceLightStatusBars = !shouldUseDark
+                    isAppearanceLightNavigationBars = !shouldUseDark
+                }
+            }
+        }
+    }
 
     CompositionLocalProvider(LocalRemediosHapticsEnabled provides settings.hapticsEnabled) {
         MaterialTheme(

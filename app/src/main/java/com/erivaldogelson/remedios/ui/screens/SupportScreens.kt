@@ -134,6 +134,7 @@ fun SettingsScreen(
     onLanguageChange: (String) -> Unit,
     onNowBarColorChange: (Long) -> Unit,
     onNowBarToneChange: (Int) -> Unit,
+    onNavigationPillTransparencyChange: (Int) -> Unit,
     onOpenPermissions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -152,6 +153,7 @@ fun SettingsScreen(
                 settings = settings,
                 onThemeModeChange = onThemeModeChange,
                 onDynamicColorChange = onDynamicColorChange,
+                onNavigationPillTransparencyChange = onNavigationPillTransparencyChange,
                 onOpenLanguage = { showLanguageSheet = true },
             )
         }
@@ -372,6 +374,7 @@ private fun AppearanceSettingsContent(
     settings: SettingsSnapshot,
     onThemeModeChange: (AppThemeMode) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit,
+    onNavigationPillTransparencyChange: (Int) -> Unit,
     onOpenLanguage: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -409,6 +412,32 @@ private fun AppearanceSettingsContent(
             subtitle = "Adapta detalhes do app às cores do dispositivo quando disponível.",
             trailing = { Switch(checked = settings.dynamicColorEnabled, onCheckedChange = onDynamicColorChange) },
         )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(34.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    "Transparência da pílula",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    "${settings.navigationPillTransparency}%",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Slider(
+                    value = settings.navigationPillTransparency.toFloat(),
+                    onValueChange = { onNavigationPillTransparencyChange(it.toInt()) },
+                    valueRange = 0f..55f,
+                )
+            }
+        }
         RoundedSettingsCard(
             title = "Idioma",
             subtitle = languageSubtitle(settings.languageTag),
@@ -946,6 +975,7 @@ private fun SettingsPreview() {
             onLanguageChange = { _ -> },
             onNowBarColorChange = { _ -> },
             onNowBarToneChange = { _ -> },
+            onNavigationPillTransparencyChange = { _ -> },
             onOpenPermissions = {},
         )
     }

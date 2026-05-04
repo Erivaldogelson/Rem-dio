@@ -56,6 +56,10 @@ class SettingsRepositoryImpl(
         preferencesRepository.setNowBarTone(tone)
     }
 
+    override suspend fun setNavigationPillTransparency(transparency: Int) {
+        preferencesRepository.setNavigationPillTransparency(transparency)
+    }
+
     private suspend fun persistSnapshot(snapshot: SettingsSnapshot) {
         settingsDao.upsert(
             AppSettingsEntity(

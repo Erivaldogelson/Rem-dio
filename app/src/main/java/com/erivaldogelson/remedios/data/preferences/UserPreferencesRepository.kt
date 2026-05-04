@@ -36,6 +36,7 @@ class UserPreferencesRepository(context: Context) {
         val languageTag = stringPreferencesKey("language_tag")
         val nowBarColor = longPreferencesKey("now_bar_color")
         val nowBarTone = intPreferencesKey("now_bar_tone")
+        val navigationPillTransparency = intPreferencesKey("navigation_pill_transparency")
     }
 
     val settings: Flow<SettingsSnapshot> = dataStore.data
@@ -76,6 +77,10 @@ class UserPreferencesRepository(context: Context) {
         it[Keys.nowBarTone] = tone.coerceIn(0, 100)
     }
 
+    suspend fun setNavigationPillTransparency(transparency: Int) = dataStore.edit {
+        it[Keys.navigationPillTransparency] = transparency.coerceIn(0, 55)
+    }
+
     suspend fun settingsValue(): SettingsSnapshot = settings.first()
 
     private fun Preferences.toSettings(): SettingsSnapshot = SettingsSnapshot(
@@ -89,5 +94,6 @@ class UserPreferencesRepository(context: Context) {
         languageTag = this[Keys.languageTag] ?: "system",
         nowBarColor = this[Keys.nowBarColor] ?: 0xFFAA8CFF,
         nowBarTone = this[Keys.nowBarTone] ?: 50,
+        navigationPillTransparency = this[Keys.navigationPillTransparency] ?: 8,
     )
 }

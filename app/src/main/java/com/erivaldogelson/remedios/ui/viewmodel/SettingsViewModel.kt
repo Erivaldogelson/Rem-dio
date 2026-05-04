@@ -52,6 +52,10 @@ class SettingsViewModel(
         refreshLiveUpdateColor()
     }
 
+    fun setNavigationPillTransparency(transparency: Int) = viewModelScope.launch {
+        settingsRepository.setNavigationPillTransparency(transparency)
+    }
+
     private suspend fun refreshLiveUpdateColor() {
         val snapshot = medicationRepository.observeDashboard().first()
         val payload = snapshot.activeReminder?.toPayload() ?: snapshot.nextDose?.toPayload() ?: return
