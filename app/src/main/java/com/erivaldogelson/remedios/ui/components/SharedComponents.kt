@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -149,61 +148,69 @@ fun SystemBackButton(
 @Composable
 fun PillBottomNavigation(
     items: List<BottomBarItem>,
+    addItem: BottomBarItem,
     selectedRoute: String,
     onSelect: (BottomBarItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 22.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Surface(
             modifier = Modifier
-                .widthIn(max = 560.dp)
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.92f),
-            shape = RoundedCornerShape(36.dp),
-            tonalElevation = 8.dp,
-            shadowElevation = 16.dp,
+                .height(74.dp)
+                .weight(1f, fill = false)
+                .widthIn(min = 230.dp, max = 330.dp),
+            color = Color(0xFFF4EEF8),
+            shape = RoundedCornerShape(64.dp),
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(horizontal = 22.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 items.forEach { item ->
                     val selected = item.route == selectedRoute
-                    val itemWeight by animateFloatAsState(
-                        targetValue = if (selected) 2.2f else 1f,
-                        label = "pill_item_weight",
+                    NavigationItem(
+                        item = item,
+                        selected = selected,
+                        onClick = { onSelect(item) },
                     )
-                    val weightModifier = Modifier.weight(itemWeight)
-                    NavigationItem(weightModifier, item, selected) { onSelect(item) }
                 }
             }
         }
+        Spacer(Modifier.width(16.dp))
+        AddNavigationItem(
+            item = addItem,
+            selected = addItem.route == selectedRoute,
+            onClick = { onSelect(addItem) },
+        )
     }
 }
 
 @Composable
-private fun RowScope.NavigationItem(
-    modifier: Modifier,
+private fun NavigationItem(
     item: BottomBarItem,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val hapticsEnabled = LocalRemediosHapticsEnabled.current
-    val backgroundAlpha by animateFloatAsState(
-        targetValue = if (selected) 0.22f else 0f,
-        label = "pill_item_background",
-    )
     val iconScale by animateFloatAsState(
-        targetValue = if (selected) 1.12f else 1f,
+        targetValue = if (selected) 1.08f else 1f,
         label = "pill_icon_scale",
     )
-    val background = SoftLilac.copy(alpha = backgroundAlpha)
-    Row(
-        modifier = modifier
+    Box(
+        modifier = Modifier
+            .size(54.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(background)
+            .background(if (selected) Color(0xFFE8DDF8) else Color.Transparent)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -214,27 +221,56 @@ private fun RowScope.NavigationItem(
                     onClick()
                 },
             )
-            .padding(horizontal = if (selected) 10.dp else 12.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(12.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = item.icon,
             contentDescription = item.label,
-            tint = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.scale(iconScale),
+            tint = Color(0xFF202026),
+            modifier = Modifier
+                .size(31.dp)
+                .scale(iconScale),
         )
-        if (selected) {
-            Spacer(Modifier.width(6.dp))
-            Text(
-                text = item.label,
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+    }
+}
+
+@Composable
+private fun AddNavigationItem(
+    item: BottomBarItem,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val hapticFeedback = LocalHapticFeedback.current
+    val hapticsEnabled = LocalRemediosHapticsEnabled.current
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.04f else 1f,
+        label = "add_nav_scale",
+    )
+    Box(
+        modifier = Modifier
+            .size(74.dp)
+            .scale(scale)
+            .clip(RoundedCornerShape(29.dp))
+            .background(Color(0xFFFFD7E4))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {
+                    if (hapticsEnabled) {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
+                    onClick()
+                },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = item.icon,
+            contentDescription = item.label,
+            tint = Color(0xFF202026),
+            modifier = Modifier.size(36.dp),
+        )
     }
 }
 

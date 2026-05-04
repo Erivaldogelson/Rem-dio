@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.13 - 2026-05-04
+
+- redesenha a navegação inferior no estilo de pílula com três ícones centrais
+- separa o botão de adicionar em um bloco rosa arredondado ao lado da pílula
+- remove textos da barra inferior e destaca o item ativo com círculo lavanda
+
 ## 0.1.12 - 2026-04-27
 
 - adiciona camada modular de seguranca com SecurePrefsManager, AuthRepository, SessionManager e ApiClient

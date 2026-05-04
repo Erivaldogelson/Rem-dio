@@ -9,10 +9,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.Medication
+import androidx.compose.material.icons.rounded.BarChart
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Today
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,12 +70,11 @@ fun RemediosApp(
     val currentRoute = currentEntry?.destination?.route
     val labels = navLabels(settings.languageTag)
     val bottomItems = listOf(
-        BottomBarItem(Routes.Today, labels.today, Icons.Rounded.Today),
-        BottomBarItem(Routes.Medications, labels.medications, Icons.Rounded.Medication),
-        BottomBarItem(Routes.AddMedication, labels.newItem, Icons.Rounded.Add),
-        BottomBarItem(Routes.History, labels.history, Icons.Rounded.History),
+        BottomBarItem(Routes.Today, labels.today, Icons.Rounded.Home),
+        BottomBarItem(Routes.History, labels.history, Icons.Rounded.BarChart),
         BottomBarItem(Routes.Settings, labels.settings, Icons.Rounded.Settings),
     )
+    val addItem = BottomBarItem(Routes.AddMedication, labels.newItem, Icons.Rounded.Add)
 
     RemediosTheme(settings = settings) {
         Scaffold(
@@ -84,6 +82,7 @@ fun RemediosApp(
                 if (currentRoute in setOf(Routes.Today, Routes.Medications, Routes.AddMedication, Routes.History, Routes.Settings)) {
                     PillBottomNavigation(
                         items = bottomItems,
+                        addItem = addItem,
                         selectedRoute = currentRoute.orEmpty(),
                         onSelect = { item ->
                             if (item.route == Routes.Today) {
