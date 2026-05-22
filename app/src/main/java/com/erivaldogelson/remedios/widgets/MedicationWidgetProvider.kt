@@ -10,6 +10,7 @@ import android.widget.RemoteViews
 import com.erivaldogelson.remedios.MainActivity
 import com.erivaldogelson.remedios.R
 import com.erivaldogelson.remedios.core.appContainer
+import com.erivaldogelson.remedios.ui.i18n.appTextFor
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import java.time.format.DateTimeFormatter
@@ -46,24 +47,26 @@ abstract class MedicationWidgetProvider(
             widgetId: Int,
             layoutId: Int,
         ) {
-            val snapshot = runBlocking {
-                context.appContainer.medicationRepository.observeDashboard().first()
+            val (snapshot, settings) = runBlocking {
+                context.appContainer.medicationRepository.observeDashboard().first() to
+                    context.appContainer.settingsRepository.settings.first()
             }
+            val text = appTextFor(settings.languageTag)
             val views = RemoteViews(context.packageName, layoutId)
             val nextDose = snapshot.nextDose
             if (nextDose == null) {
-                views.setTextViewText(R.id.widget_title, context.getString(R.string.widget_empty_title))
-                views.setTextViewText(R.id.widget_subtitle, context.getString(R.string.widget_empty_subtitle))
+                views.setTextViewText(R.id.widget_title, text.dashboard.emptyTitle)
+                views.setTextViewText(R.id.widget_subtitle, text.dashboard.emptyMessage)
                 views.setTextViewText(R.id.widget_time, "--")
-                views.setTextViewText(R.id.widget_meta, context.getString(R.string.widget_empty_meta))
+                views.setTextViewText(R.id.widget_meta, text.components.noUpcomingDoses)
             } else {
-                val minutes = nextDose.remainingMinutes.coerceAtLeast(0)
+                val minutes = nextDose.remainingMinutes.coerceAtLeast(0L)
                 views.setTextViewText(R.id.widget_title, nextDose.medicationName)
                 views.setTextViewText(R.id.widget_subtitle, nextDose.dosage)
                 views.setTextViewText(R.id.widget_time, nextDose.scheduledAt.format(DateTimeFormatter.ofPattern("HH:mm")))
                 views.setTextViewText(
                     R.id.widget_meta,
-                    context.resources.getQuantityString(R.plurals.widget_minutes_remaining, minutes.toInt(), minutes),
+                    if (minutes == 0L) text.dashboard.activeDoseTitle else "${minutes} min",
                 )
             }
             views.setOnClickPendingIntent(R.id.widget_root, launchIntent(context))

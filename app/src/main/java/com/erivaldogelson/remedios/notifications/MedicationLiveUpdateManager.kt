@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import com.erivaldogelson.remedios.MainActivity
 import com.erivaldogelson.remedios.R
 import com.erivaldogelson.remedios.data.preferences.UserPreferencesRepository
+import com.erivaldogelson.remedios.ui.i18n.appTextFor
 import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlinx.coroutines.runBlocking
@@ -30,12 +31,13 @@ class MedicationLiveUpdateManager(
         context.getSystemService(NotificationManager::class.java)
 
     fun ensureChannel() {
+        val text = notificationText()
         val channel = NotificationChannel(
             CHANNEL_ID,
-            context.getString(R.string.notification_channel_name),
+            text.settings.reminders,
             NotificationManager.IMPORTANCE_HIGH,
         ).apply {
-            description = context.getString(R.string.notification_channel_description)
+            description = text.settings.nowBarLiveUpdatesSubtitle
         }
         notificationManager.createNotificationChannel(channel)
     }
@@ -74,6 +76,7 @@ class MedicationLiveUpdateManager(
 
     @RequiresApi(36)
     private fun buildAndroid16LiveUpdate(payload: DoseLiveUpdatePayload): Notification {
+        val text = notificationText()
         val accent = notificationAccentColor()
         val progress = payload.progressPercent()
         val icon = Icon.createWithResource(context, R.drawable.ic_pill)
@@ -89,8 +92,8 @@ class MedicationLiveUpdateManager(
             .setSmallIcon(R.drawable.ic_pill)
             .setColor(accent)
             .setColorized(false)
-            .setContentTitle(payload.medicationName.ifBlank { "Próxima dose" })
-            .setContentText("Dose ${payload.dosage} às ${payload.timeLabel()}")
+            .setContentTitle(payload.medicationName.ifBlank { text.dashboard.nextDoseTitle })
+            .setContentText("${text.medication.doseLabel}: ${payload.dosage} • ${payload.timeLabel()}")
             .setSubText("Now Bar")
             .setContentIntent(buildContentIntent())
             .setPriority(Notification.PRIORITY_HIGH)
@@ -102,22 +105,23 @@ class MedicationLiveUpdateManager(
             .setShowWhen(true)
             .setUsesChronometer(payload.triggerAt.isAfter(LocalDateTime.now()))
             .setChronometerCountDown(true)
-            .setShortCriticalText(payload.chipText())
+            .setShortCriticalText(payload.chipText(text.medication.title))
             .setStyle(style)
             .addExtras(Bundle().apply { putBoolean(EXTRA_REQUEST_PROMOTED_ONGOING, true) })
-            .addAction(buildPlatformAction(payload, ACTION_TAKE, R.string.action_take_now))
-            .addAction(buildPlatformAction(payload, ACTION_SNOOZE, R.string.action_snooze))
-            .addAction(buildPlatformAction(payload, ACTION_SKIP, R.string.action_skip))
+            .addAction(buildPlatformAction(payload, ACTION_TAKE, text.common.takeDose))
+            .addAction(buildPlatformAction(payload, ACTION_SNOOZE, text.common.snooze))
+            .addAction(buildPlatformAction(payload, ACTION_SKIP, text.common.skip))
             .build()
     }
 
-    private fun buildFallbackNotification(payload: DoseLiveUpdatePayload): Notification =
-        NotificationCompat.Builder(context, CHANNEL_ID)
+    private fun buildFallbackNotification(payload: DoseLiveUpdatePayload): Notification {
+        val text = notificationText()
+        return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_pill)
             .setColor(notificationAccentColor())
             .setColorized(false)
-            .setContentTitle(payload.medicationName.ifBlank { "Próxima dose" })
-            .setContentText("Dose ${payload.dosage} às ${payload.timeLabel()}")
+            .setContentTitle(payload.medicationName.ifBlank { text.dashboard.nextDoseTitle })
+            .setContentText("${text.medication.doseLabel}: ${payload.dosage} • ${payload.timeLabel()}")
             .setSubText("Live Update")
             .setContentIntent(buildContentIntent())
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -131,16 +135,27 @@ class MedicationLiveUpdateManager(
             .setChronometerCountDown(true)
             .setStyle(
                 NotificationCompat.BigTextStyle().bigText(
-                    "Registre a dose de ${payload.medicationName}, adie por 15 minutos ou ignore se necessário.",
+                    "${text.activeReminder.activeDose}: ${payload.medicationName}\n" +
+                        "${text.common.takeDose} • ${text.common.snooze} • ${text.common.skip}",
                 ),
             )
             .setProgress(100, payload.progressPercent(), false)
             .setRequestPromotedOngoing(true)
-            .setShortCriticalText(payload.chipText())
-            .addAction(0, context.getString(R.string.action_take_now), actionPendingIntent(payload, ACTION_TAKE))
-            .addAction(0, context.getString(R.string.action_snooze), actionPendingIntent(payload, ACTION_SNOOZE))
-            .addAction(0, context.getString(R.string.action_skip), actionPendingIntent(payload, ACTION_SKIP))
+            .setShortCriticalText(payload.chipText(text.medication.title))
+            .addAction(0, text.common.takeDose, actionPendingIntent(payload, ACTION_TAKE))
+            .addAction(0, text.common.snooze, actionPendingIntent(payload, ACTION_SNOOZE))
+            .addAction(0, text.common.skip, actionPendingIntent(payload, ACTION_SKIP))
             .build()
+    }
+
+    private fun notificationText() =
+        runCatching {
+            runBlocking {
+                appTextFor(preferencesRepository.settingsValue().languageTag)
+            }
+        }.getOrElse {
+            appTextFor("system")
+        }
 
     private fun notificationAccentColor(): Int =
         runCatching {
@@ -168,11 +183,11 @@ class MedicationLiveUpdateManager(
     private fun buildPlatformAction(
         payload: DoseLiveUpdatePayload,
         action: String,
-        titleRes: Int,
+        title: String,
     ): Notification.Action =
         Notification.Action.Builder(
             Icon.createWithResource(context, R.drawable.ic_pill),
-            context.getString(titleRes),
+            title,
             actionPendingIntent(payload, action),
         ).build()
 

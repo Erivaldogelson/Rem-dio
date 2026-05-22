@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.erivaldogelson.remedios.ui.components.AnimatedPrimaryActionButton
 import com.erivaldogelson.remedios.ui.components.PremiumScaffoldBackground
+import com.erivaldogelson.remedios.ui.i18n.LocalAppText
 import com.erivaldogelson.remedios.ui.theme.Mist
 import com.erivaldogelson.remedios.ui.theme.RemediosTheme
 import com.erivaldogelson.remedios.ui.theme.SoftLilac
@@ -53,6 +54,7 @@ fun SplashScreen(
     onFinished: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         visible = true
@@ -80,10 +82,10 @@ fun SplashScreen(
                         Text("💊", style = MaterialTheme.typography.displayLarge)
                     }
                     Spacer(Modifier.height(20.dp))
-                    Text("Remédios", style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onBackground)
+                    Text(text.common.appName, style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onBackground)
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Cuidado calmo, bonito e preciso para cada dose.",
+                        text.onboarding.splashSubtitle,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
                         textAlign = TextAlign.Center,
@@ -99,20 +101,21 @@ fun OnboardingScreen(
     onContinue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
     val pages = listOf(
         OnboardingPage(
-            title = "Registre seus remédios com clareza",
-            description = "Adicione manualmente, organize horários e use cores para identificar cada tratamento com calma.",
+            title = text.onboarding.page1Title,
+            description = text.onboarding.page1Description,
             emoji = "💊",
         ),
         OnboardingPage(
-            title = "Escaneie pela câmera",
-            description = "Use OCR para sugerir nome, dose e laboratório a partir da embalagem sem digitação cansativa.",
+            title = text.onboarding.page2Title,
+            description = text.onboarding.page2Description,
             emoji = "📷",
         ),
         OnboardingPage(
-            title = "Lembretes vivos e histórico elegante",
-            description = "Acompanhe próximas doses, ações rápidas e uma base pronta para Live Updates e Now Bar no Android 16.",
+            title = text.onboarding.page3Title,
+            description = text.onboarding.page3Description,
             emoji = "✨",
         ),
     )
@@ -130,7 +133,7 @@ fun OnboardingScreen(
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = "Bem-vindo ao Remédios",
+                text = text.onboarding.welcome,
                 style = MaterialTheme.typography.displayMedium,
                 color = MaterialTheme.colorScheme.onBackground,
             )
@@ -173,7 +176,7 @@ fun OnboardingScreen(
                     )
                 }
                 AnimatedPrimaryActionButton(
-                    text = if (currentPage == pages.lastIndex) "Começar agora" else "Continuar",
+                    text = if (currentPage == pages.lastIndex) text.onboarding.startNow else text.onboarding.continueText,
                     onClick = {
                         if (currentPage == pages.lastIndex) {
                             onContinue()

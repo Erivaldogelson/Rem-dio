@@ -117,7 +117,7 @@ class MedicationFormViewModel(
                 _uiState.update {
                     it.copy(
                         isAnalyzingImage = false,
-                        errorMessage = error.message ?: "Não foi possível processar a imagem.",
+                        errorMessage = error.message,
                     )
                 }
             }
@@ -137,7 +137,7 @@ class MedicationFormViewModel(
                 _uiState.update {
                     it.copy(
                         isSaving = false,
-                        errorMessage = error.message ?: "Não foi possível salvar o medicamento.",
+                        errorMessage = error.message,
                     )
                 }
             }

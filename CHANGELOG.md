@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.19 - 2026-05-22
+
+- adiciona a opção Sistema no seletor de idioma para acompanhar o idioma do dispositivo
+- restringe a lista de idiomas a inglês, português de Portugal, Brasil e Angola, espanhol, francês, chinês e japonês
+- centraliza as traduções do app e aplica o idioma escolhido nas telas principais, configurações, formulários, widget e notificações/Now Bar
+- remove textos fixos em português de componentes visíveis para manter a interface consistente no idioma selecionado
+
 ## 0.1.15 - 2026-05-04
 
 - separa o fluxo da Now Bar em dois disparos: lembrete normal da dose e acompanhamento ao vivo após tocar em Tomei

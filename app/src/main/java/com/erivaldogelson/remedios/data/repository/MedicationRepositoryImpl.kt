@@ -65,11 +65,7 @@ class MedicationRepositoryImpl(
         }
 
         DashboardSnapshot(
-            greetingTitle = if (nextDose != null && nextDose.remainingMinutes <= 0) {
-                "Dose em andamento"
-            } else {
-                "Próxima dose"
-            },
+            greetingTitle = "",
             nextDose = nextDose,
             dueTodayCount = dueTodayCount,
             pendingTodayCount = (dueTodayCount - takenTodayCount).coerceAtLeast(0),
@@ -99,7 +95,7 @@ class MedicationRepositoryImpl(
                     name = medication.medication.name,
                     dosage = medication.medication.dosage,
                     form = medication.medication.form,
-                    nextTimeLabel = nextDose?.scheduledAt?.toLocalTime()?.format(timeFormatter) ?: "Sem horário",
+                    nextTimeLabel = nextDose?.scheduledAt?.toLocalTime()?.format(timeFormatter).orEmpty(),
                     quantityRemaining = medication.medication.quantityRemaining,
                     accentColor = medication.medication.accentColor,
                     imageUri = medication.images.firstOrNull()?.uri,
@@ -165,7 +161,7 @@ class MedicationRepositoryImpl(
                 DoseLogItemModel(
                     id = log.id,
                     medicationId = log.medicationId,
-                    medicationName = medication?.name ?: "Medicamento",
+                    medicationName = medication?.name.orEmpty(),
                     dosage = medication?.dosage ?: "",
                     scheduledAt = log.scheduledAt,
                     actualAt = log.actualAt,
@@ -271,11 +267,7 @@ class MedicationRepositoryImpl(
                     ReminderAction.SNOOZE -> DoseStatus.SNOOZED
                     ReminderAction.SKIP -> DoseStatus.SKIPPED
                 },
-                note = when (action) {
-                    ReminderAction.TAKE -> "Dose concluída pelo lembrete."
-                    ReminderAction.SNOOZE -> "Dose adiada por 15 minutos."
-                    ReminderAction.SKIP -> "Dose ignorada manualmente."
-                },
+                note = "",
             ),
         )
 

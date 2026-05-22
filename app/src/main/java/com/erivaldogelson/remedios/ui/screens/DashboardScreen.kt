@@ -34,6 +34,7 @@ import com.erivaldogelson.remedios.ui.components.AnimatedPrimaryActionButton
 import com.erivaldogelson.remedios.ui.components.EmptyStateCard
 import com.erivaldogelson.remedios.ui.components.NextDoseCircle
 import com.erivaldogelson.remedios.ui.components.PremiumScaffoldBackground
+import com.erivaldogelson.remedios.ui.i18n.LocalAppText
 import com.erivaldogelson.remedios.ui.theme.InkCard
 import com.erivaldogelson.remedios.ui.theme.Mist
 import com.erivaldogelson.remedios.ui.theme.MistMuted
@@ -50,6 +51,12 @@ fun DashboardScreen(
     onOpenActiveReminder: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
+    val title = if (state.activeReminder != null || (state.nextDose?.remainingMinutes ?: 1L) <= 0) {
+        text.dashboard.activeDoseTitle
+    } else {
+        text.dashboard.nextDoseTitle
+    }
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val nextDoseSize = when {
@@ -68,12 +75,12 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             Text(
-                text = state.greetingTitle,
+                text = title,
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
-                text = "Tudo o que importa para a próxima medicação, num lugar só.",
+                text = text.dashboard.intro,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -89,13 +96,13 @@ fun DashboardScreen(
             if (state.nextDose != null || state.activeReminder != null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AnimatedPrimaryActionButton(
-                        text = "Tomar dose",
+                        text = text.common.takeDose,
                         onClick = onTakeNow,
                         icon = Icons.Rounded.LocalHospital,
                         modifier = Modifier.weight(1f),
                     )
                     AnimatedPrimaryActionButton(
-                        text = "Adiar",
+                        text = text.common.snooze,
                         onClick = onSnooze,
                         icon = Icons.Rounded.HourglassTop,
                         modifier = Modifier.weight(1f),
@@ -103,7 +110,7 @@ fun DashboardScreen(
                     )
                 }
                 AnimatedPrimaryActionButton(
-                    text = "Ignorar",
+                    text = text.common.skip,
                     onClick = onSkip,
                     icon = Icons.Rounded.AlarmOn,
                     modifier = Modifier.fillMaxWidth(),
@@ -121,7 +128,7 @@ fun DashboardScreen(
                         modifier = Modifier.padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text("Próximo", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text.dashboard.next, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(nextDose.medicationName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
                         Text(
                             "${nextDose.dosage} • ${nextDose.scheduledAt.toLocalTime()}",
@@ -131,18 +138,18 @@ fun DashboardScreen(
                     }
                 }
             } ?: EmptyStateCard(
-                title = "Nenhuma dose próxima",
-                message = "Adicione seu primeiro medicamento para começar a receber lembretes, histórico e atualizações ao vivo.",
+                title = text.dashboard.emptyTitle,
+                message = text.dashboard.emptyMessage,
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                 MetricCard(
-                    title = "Doses hoje",
+                    title = text.dashboard.dosesToday,
                     value = state.dueTodayCount.toString(),
                     modifier = Modifier.weight(1f),
                 )
                 MetricCard(
-                    title = "Pendentes",
+                    title = text.dashboard.pending,
                     value = state.pendingTodayCount.toString(),
                     modifier = Modifier.weight(1f),
                 )
@@ -162,7 +169,7 @@ fun DashboardScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Lembrete ativo", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                            Text(text.dashboard.activeReminder, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                             Text(
                                 state.activeReminder.medicationName,
                                 style = MaterialTheme.typography.bodyLarge,
@@ -175,7 +182,7 @@ fun DashboardScreen(
             }
 
             AnimatedPrimaryActionButton(
-                text = "Ver medicamentos",
+                text = text.dashboard.viewMedications,
                 onClick = onOpenMedications,
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),

@@ -72,6 +72,7 @@ import com.erivaldogelson.remedios.domain.model.DoseStatus
 import com.erivaldogelson.remedios.domain.model.MedicationSummary
 import com.erivaldogelson.remedios.domain.model.NextDoseSnapshot
 import com.erivaldogelson.remedios.domain.model.OcrSuggestion
+import com.erivaldogelson.remedios.ui.i18n.LocalAppText
 import com.erivaldogelson.remedios.ui.theme.Danger
 import com.erivaldogelson.remedios.ui.theme.InkCard
 import com.erivaldogelson.remedios.ui.theme.InkCardSoft
@@ -128,6 +129,7 @@ fun SystemBackButton(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
     val hapticFeedback = LocalHapticFeedback.current
     val hapticsEnabled = LocalRemediosHapticsEnabled.current
     Surface(
@@ -146,7 +148,7 @@ fun SystemBackButton(
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = "Voltar",
+                contentDescription = text.common.back,
                 tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.size(30.dp),
             )
@@ -359,8 +361,15 @@ fun MedicationCard(
     onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
 ) {
+    val text = LocalAppText.current
     val hapticFeedback = LocalHapticFeedback.current
     val hapticsEnabled = LocalRemediosHapticsEnabled.current
+    val nextTimeLabel = if (medication.nextTimeLabel.isBlank() || medication.nextTimeLabel == "Sem horário") {
+        text.components.noUpcomingDoses
+    } else {
+        medication.nextTimeLabel
+    }
+
     fun performTapHaptic() {
         if (hapticsEnabled) {
             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -416,7 +425,7 @@ fun MedicationCard(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = "${medication.dosage}  •  Próximo ${medication.nextTimeLabel}",
+                    text = "${medication.dosage}  •  ${text.components.nextPrefix} $nextTimeLabel",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -436,7 +445,7 @@ fun MedicationCard(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.EditNote,
-                        contentDescription = "Editar remédio salvo",
+                        contentDescription = text.common.editSavedMedication,
                         tint = MaterialTheme.colorScheme.primary,
                     )
                 }
@@ -450,7 +459,7 @@ fun MedicationCard(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Delete,
-                        contentDescription = "Apagar remédio salvo",
+                        contentDescription = text.common.deleteSavedMedication,
                         tint = Danger,
                     )
                 }
@@ -464,6 +473,7 @@ fun NextDoseCircle(
     nextDose: NextDoseSnapshot?,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
     val animatedProgress by animateFloatAsState(
         targetValue = nextDose?.progress ?: 0f,
         label = "dose_progress",
@@ -506,7 +516,7 @@ fun NextDoseCircle(
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = nextDose?.medicationName ?: "Sem doses próximas",
+                text = nextDose?.medicationName ?: text.components.noUpcomingDoses,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -627,6 +637,7 @@ fun OcrResultConfirmationCard(
     onApply: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -636,13 +647,13 @@ fun OcrResultConfirmationCard(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text("Sugestões do OCR", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+            Text(text.components.ocrSuggestions, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(
                     listOfNotNull(
-                        suggestion.suggestedName.takeIf { it.isNotBlank() }?.let { "Nome: $it" },
-                        suggestion.suggestedDosage.takeIf { it.isNotBlank() }?.let { "Dose: $it" },
-                        suggestion.suggestedManufacturer.takeIf { it.isNotBlank() }?.let { "Lab: $it" },
+                        suggestion.suggestedName.takeIf { it.isNotBlank() }?.let { "${text.components.namePrefix}: $it" },
+                        suggestion.suggestedDosage.takeIf { it.isNotBlank() }?.let { "${text.components.dosePrefix}: $it" },
+                        suggestion.suggestedManufacturer.takeIf { it.isNotBlank() }?.let { "${text.components.labPrefix}: $it" },
                     ),
                 ) { item ->
                     StatusPill(
@@ -661,7 +672,7 @@ fun OcrResultConfirmationCard(
                 )
             }
             AnimatedPrimaryActionButton(
-                text = "Aplicar sugestões",
+                text = text.components.applySuggestions,
                 onClick = onApply,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -674,6 +685,18 @@ fun DoseLogItem(
     item: DoseLogItemModel,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
+    val medicationName = if (item.medicationName.isBlank() || item.medicationName == "Medicamento") {
+        text.medication.title
+    } else {
+        item.medicationName
+    }
+    val noteText = when (item.note) {
+        "Dose concluída pelo lembrete." -> text.doseStatusLabel(DoseStatus.TAKEN)
+        "Dose adiada por 15 minutos." -> text.doseStatusLabel(DoseStatus.SNOOZED)
+        "Dose ignorada manualmente." -> text.doseStatusLabel(DoseStatus.SKIPPED)
+        else -> item.note
+    }
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -687,13 +710,7 @@ fun DoseLogItem(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             StatusPill(
-                text = when (item.status) {
-                    DoseStatus.TAKEN -> "Tomado"
-                    DoseStatus.SNOOZED -> "Adiado"
-                    DoseStatus.SKIPPED -> "Ignorado"
-                    DoseStatus.MISSED -> "Perdido"
-                    DoseStatus.UPCOMING -> "Próximo"
-                },
+                text = text.doseStatusLabel(item.status),
                 icon = when (item.status) {
                     DoseStatus.TAKEN -> Icons.Rounded.CheckCircle
                     DoseStatus.MISSED -> Icons.Rounded.History
@@ -703,15 +720,15 @@ fun DoseLogItem(
                 tint = item.status.tintColor(),
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.medicationName, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                Text(medicationName, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                 Text(
                     "${item.dosage} • ${item.scheduledAt.format(DateTimeFormatter.ofPattern("dd/MM • HH:mm"))}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (item.note.isNotBlank()) {
+                if (noteText.isNotBlank()) {
                     Spacer(Modifier.height(6.dp))
-                    Text(item.note, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(noteText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

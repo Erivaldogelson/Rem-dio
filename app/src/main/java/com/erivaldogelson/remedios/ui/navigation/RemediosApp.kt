@@ -18,12 +18,14 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -40,6 +42,8 @@ import com.erivaldogelson.remedios.domain.model.OcrSuggestion
 import com.erivaldogelson.remedios.domain.model.SettingsSnapshot
 import com.erivaldogelson.remedios.ui.components.BottomBarItem
 import com.erivaldogelson.remedios.ui.components.PillBottomNavigation
+import com.erivaldogelson.remedios.ui.i18n.LocalAppText
+import com.erivaldogelson.remedios.ui.i18n.appTextFor
 import com.erivaldogelson.remedios.ui.screens.ActiveReminderScreen
 import com.erivaldogelson.remedios.ui.screens.AddMedicationScreen
 import com.erivaldogelson.remedios.ui.screens.DashboardScreen
@@ -69,10 +73,18 @@ fun RemediosApp(
         initialValue = null,
     )
     val settings = loadedSettings ?: SettingsSnapshot()
+    val configuration = LocalConfiguration.current
+    val systemLanguageTag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        configuration.locales[0]?.toLanguageTag().orEmpty()
+    } else {
+        @Suppress("DEPRECATION")
+        configuration.locale.toLanguageTag()
+    }
+    val appText = remember(settings.languageTag, systemLanguageTag) { appTextFor(settings.languageTag) }
     val navController = rememberNavController()
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
-    val labels = navLabels(settings.languageTag)
+    val labels = appText.nav
     val bottomItems = listOf(
         BottomBarItem(Routes.Today, labels.today, Icons.Rounded.Home),
         BottomBarItem(Routes.History, labels.history, Icons.Rounded.BarChart),
@@ -80,7 +92,8 @@ fun RemediosApp(
     )
     val addItem = BottomBarItem(Routes.AddMedication, labels.newItem, Icons.Rounded.Add)
 
-    RemediosTheme(settings = settings) {
+    CompositionLocalProvider(LocalAppText provides appText) {
+        RemediosTheme(settings = settings) {
         Scaffold(
             bottomBar = {
                 if (currentRoute in setOf(Routes.Today, Routes.Medications, Routes.AddMedication, Routes.History, Routes.Settings)) {
@@ -313,36 +326,8 @@ fun RemediosApp(
             }
         }
     }
-}
-
-private data class NavLabels(
-    val today: String,
-    val medications: String,
-    val newItem: String,
-    val history: String,
-    val settings: String,
-)
-
-private fun navLabels(languageTag: String): NavLabels {
-    val locale = resolvedLocale(languageTag)
-    return when {
-        locale.language == "en" -> NavLabels("Today", "Meds", "New", "History", "Settings")
-        locale.language == "pt" && locale.country == "PT" -> NavLabels("Hoje", "Remédios", "Novo", "Histórico", "Defin.")
-        locale.language == "pt" && locale.country == "AO" -> NavLabels("Hoje", "Remédios", "Novo", "Histórico", "Defin.")
-        locale.language == "es" -> NavLabels("Hoy", "Medic.", "Nuevo", "Historial", "Ajustes")
-        locale.language == "fr" -> NavLabels("Auj.", "Médic.", "Nouv.", "Hist.", "Régl.")
-        locale.language == "zh" -> NavLabels("今天", "药品", "新增", "记录", "设置")
-        locale.language == "ja" -> NavLabels("今日", "薬", "追加", "履歴", "設定")
-        else -> NavLabels("Hoje", "Remédios", "Novo", "Histórico", "Config.")
     }
 }
-
-private fun resolvedLocale(languageTag: String): java.util.Locale =
-    if (languageTag == "system") {
-        java.util.Locale.getDefault()
-    } else {
-        java.util.Locale.forLanguageTag(languageTag)
-    }
 
 private const val PageTransitionMillis = 280
 

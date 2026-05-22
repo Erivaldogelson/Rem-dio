@@ -25,8 +25,8 @@ data class DoseLiveUpdatePayload(
 
     fun timeLabel(): String = triggerAt.format(DateTimeFormatter.ofPattern("HH:mm"))
 
-    fun chipText(now: LocalDateTime = LocalDateTime.now()): String =
-        medicationName.ifBlank { "Remédio" }.take(12)
+    fun chipText(fallback: String): String =
+        medicationName.ifBlank { fallback }.take(12)
 
     companion object {
         fun notificationId(

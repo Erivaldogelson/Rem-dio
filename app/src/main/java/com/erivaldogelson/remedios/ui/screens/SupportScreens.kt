@@ -75,6 +75,9 @@ import com.erivaldogelson.remedios.ui.components.EmptyStateCard
 import com.erivaldogelson.remedios.ui.components.PremiumScaffoldBackground
 import com.erivaldogelson.remedios.ui.components.RoundedSettingsCard
 import com.erivaldogelson.remedios.ui.components.SystemBackButton
+import com.erivaldogelson.remedios.ui.i18n.LocalAppText
+import com.erivaldogelson.remedios.ui.i18n.languageSubtitle
+import com.erivaldogelson.remedios.ui.i18n.supportedLanguageOptions
 import com.erivaldogelson.remedios.ui.theme.LocalRemediosHapticsEnabled
 import com.erivaldogelson.remedios.ui.theme.Mist
 import com.erivaldogelson.remedios.ui.theme.MistMuted
@@ -83,7 +86,6 @@ import com.erivaldogelson.remedios.ui.theme.Warning
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 
@@ -94,6 +96,7 @@ fun HistoryScreen(
     onSelectFilter: (HistoryFilter) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -102,20 +105,20 @@ fun HistoryScreen(
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Histórico", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
+            Text(text.history.title, style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 HistoryFilter.entries.forEach { filter ->
                     FilterChip(
                         selected = selectedFilter == filter,
                         onClick = { onSelectFilter(filter) },
-                        label = { Text(filter.name.lowercase().replaceFirstChar(Char::titlecase)) },
+                        label = { Text(text.historyFilterLabel(filter)) },
                     )
                 }
             }
             if (items.isEmpty()) {
                 EmptyStateCard(
-                    title = "Ainda sem registros",
-                    message = "Quando você marcar doses como tomadas, adiadas ou perdidas, tudo aparece aqui.",
+                    title = text.history.emptyTitle,
+                    message = text.history.emptyMessage,
                 )
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -147,7 +150,7 @@ fun SettingsScreen(
     var showLanguageSheet by remember { mutableStateOf(false) }
     var backPreviewProgress by remember { mutableFloatStateOf(0f) }
     val previewOffset = with(LocalDensity.current) { 96.dp.toPx() }
-    val text = settingsText(settings.languageTag)
+    val text = LocalAppText.current.settings
 
     PredictiveBackHandler(enabled = selectedSection != null && !showLanguageSheet) { backEvents ->
         try {
@@ -202,7 +205,7 @@ fun SettingsScreen(
 
                 SettingsSection.REMINDERS -> SettingsSubpage(
                     title = text.reminders,
-                    subtitle = "Now Bar, feedback e permissões",
+                    subtitle = text.remindersSubpageSubtitle,
                     onBack = { selectedSection = null },
                 ) {
                     ReminderSettingsContent(
@@ -217,7 +220,7 @@ fun SettingsScreen(
 
                 SettingsSection.ABOUT -> SettingsSubpage(
                     title = text.about,
-                    subtitle = "Remédios",
+                    subtitle = LocalAppText.current.common.appName,
                     onBack = { selectedSection = null },
                 ) {
                     AboutSettingsContent()
@@ -264,7 +267,8 @@ private fun SettingsHome(
     languageTag: String,
     modifier: Modifier = Modifier,
 ) {
-    val text = settingsText(languageTag)
+    val appText = LocalAppText.current
+    val text = appText.settings
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -282,37 +286,37 @@ private fun SettingsHome(
             )
             SettingsMenuCard(
                 icon = "💊",
-                title = "Remédios+",
-                subtitle = "Ativação por remédio e Now Bar",
+                title = "${appText.common.appName}+",
+                subtitle = text.remediesPlusSubtitle,
                 highlighted = true,
                 onClick = onOpenReminders,
             )
             SettingsMenuCard(
                 icon = "⏱",
                 title = text.reminders,
-                subtitle = "Live Updates, feedback tátil e permissões",
+                subtitle = text.remindersSubtitle,
                 onClick = onOpenReminders,
             )
             SettingsMenuCard(
                 icon = "🎨",
                 title = text.appearance,
-                subtitle = "Tema claro, escuro e cores dinâmicas",
+                subtitle = text.appearanceSubtitle,
                 onClick = onOpenAppearance,
             )
             SettingsMenuCard(
                 icon = "ℹ️",
                 title = text.about,
-                subtitle = "Desenvolvedor e redes sociais",
+                subtitle = text.aboutSubtitle,
                 onClick = onOpenAbout,
             )
             SettingsMenuCard(
                 icon = "🌐",
                 title = text.language,
-                subtitle = languageSubtitle(languageTag),
+                subtitle = languageSubtitle(languageTag, appText),
                 onClick = onOpenLanguage,
             )
             AnimatedPrimaryActionButton(
-                text = "Gerenciar permissões",
+                text = text.managePermissions,
                 onClick = onOpenPermissions,
                 modifier = Modifier.fillMaxWidth(),
                 icon = Icons.Rounded.Shield,
@@ -416,6 +420,8 @@ private fun AppearanceSettingsContent(
     onNavigationPillTransparencyChange: (Int) -> Unit,
     onOpenLanguage: () -> Unit,
 ) {
+    val appText = LocalAppText.current
+    val text = appText.settings
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -426,29 +432,29 @@ private fun AppearanceSettingsContent(
                 modifier = Modifier.padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Text("Tema", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
+                Text(text.theme, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = settings.themeMode == AppThemeMode.SYSTEM,
                         onClick = { onThemeModeChange(AppThemeMode.SYSTEM) },
-                        label = { Text("Auto") },
+                        label = { Text(text.themeAuto) },
                     )
                     FilterChip(
                         selected = settings.themeMode == AppThemeMode.LIGHT,
                         onClick = { onThemeModeChange(AppThemeMode.LIGHT) },
-                        label = { Text("Claro") },
+                        label = { Text(text.themeLight) },
                     )
                     FilterChip(
                         selected = settings.themeMode == AppThemeMode.DARK,
                         onClick = { onThemeModeChange(AppThemeMode.DARK) },
-                        label = { Text("Escuro") },
+                        label = { Text(text.themeDark) },
                     )
                 }
             }
         }
         RoundedSettingsCard(
-            title = "Cores dinâmicas",
-            subtitle = "Adapta detalhes do app às cores do dispositivo quando disponível.",
+            title = text.dynamicColors,
+            subtitle = text.dynamicColorsSubtitle,
             trailing = { Switch(checked = settings.dynamicColorEnabled, onCheckedChange = onDynamicColorChange) },
         )
         Card(
@@ -461,7 +467,7 @@ private fun AppearanceSettingsContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    "Transparência da pílula",
+                    text.pillTransparency,
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onBackground,
                 )
@@ -478,8 +484,8 @@ private fun AppearanceSettingsContent(
             }
         }
         RoundedSettingsCard(
-            title = "Idioma",
-            subtitle = languageSubtitle(settings.languageTag),
+            title = text.language,
+            subtitle = languageSubtitle(settings.languageTag, appText),
             trailing = { Text("›", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
             onClick = onOpenLanguage,
         )
@@ -495,10 +501,11 @@ private fun ReminderSettingsContent(
     onNowBarToneChange: (Int) -> Unit,
     onOpenPermissions: () -> Unit,
 ) {
+    val text = LocalAppText.current.settings
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         RoundedSettingsCard(
-            title = "Now Bar / Live Updates",
-            subtitle = "Só ativa quando existir remédio salvo com próxima dose.",
+            title = text.nowBarLiveUpdates,
+            subtitle = text.nowBarLiveUpdatesSubtitle,
             trailing = { Switch(checked = settings.liveUpdatesEnabled, onCheckedChange = onLiveUpdatesChange) },
         )
         Card(
@@ -510,7 +517,7 @@ private fun ReminderSettingsContent(
                 modifier = Modifier.padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Text("Cor da Now Bar", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
+                Text(text.nowBarColor, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     nowBarColorOptions.forEach { option ->
                         Surface(
@@ -529,7 +536,7 @@ private fun ReminderSettingsContent(
                         }
                     }
                 }
-                Text("Tonalidade: ${settings.nowBarTone}%", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("${text.nowBarTone}: ${settings.nowBarTone}%", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Slider(
                     value = settings.nowBarTone.toFloat(),
                     onValueChange = { onNowBarToneChange(it.toInt()) },
@@ -538,13 +545,13 @@ private fun ReminderSettingsContent(
             }
         }
         RoundedSettingsCard(
-            title = "Feedback tátil",
-            subtitle = "Aplica vibração suave em botões, navegação e cartões.",
+            title = text.hapticFeedback,
+            subtitle = text.hapticFeedbackSubtitle,
             trailing = { Switch(checked = settings.hapticsEnabled, onCheckedChange = onHapticsChange) },
         )
         RoundedSettingsCard(
-            title = "Permissões",
-            subtitle = "Câmera, notificações e alarmes exatos.",
+            title = text.permissions,
+            subtitle = text.permissionsSubtitle,
             trailing = { Icon(Icons.Rounded.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground) },
             onClick = onOpenPermissions,
         )
@@ -569,6 +576,7 @@ private fun LanguagePickerSheet(
     onSelectLanguage: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val text = LocalAppText.current
     val languages = remember { supportedLanguageOptions }
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -587,6 +595,8 @@ private fun LanguagePickerSheet(
             ) {
                 items(languages) { language ->
                     val selected = language.tag == selectedLanguageTag
+                    val titleText = if (language.tag == "system") text.common.system else language.title
+                    val subtitleText = if (language.tag == "system") text.common.useSystemLanguage else language.subtitle
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -605,9 +615,9 @@ private fun LanguagePickerSheet(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(language.title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
-                                if (language.subtitle.isNotBlank()) {
-                                    Text(language.subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(titleText, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
+                                if (subtitleText.isNotBlank()) {
+                                    Text(subtitleText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                             if (selected) {
@@ -622,147 +632,10 @@ private fun LanguagePickerSheet(
     }
 }
 
-private data class LanguageOption(
-    val tag: String,
-    val title: String,
-    val subtitle: String,
-)
-
-private val supportedLanguageOptions = listOf(
-    LanguageOption("en", "Inglês", "English"),
-    LanguageOption("pt-PT", "Português de Portugal", "Portugal"),
-    LanguageOption("pt-BR", "Português do Brasil", "Brasil"),
-    LanguageOption("pt-AO", "Português de Angola", "Angola"),
-    LanguageOption("es", "Espanhol", "Español"),
-    LanguageOption("fr", "Francês", "Français"),
-    LanguageOption("zh-CN", "Chinês", "中文"),
-    LanguageOption("ja-JP", "Japonês", "日本語"),
-)
-
-private fun languageSubtitle(languageTag: String): String =
-    if (languageTag == "system") {
-        settingsText(languageTag).system
-    } else {
-        supportedLanguageOptions.firstOrNull { it.tag == languageTag }?.title
-            ?: Locale.forLanguageTag(languageTag).getDisplayName(Locale.forLanguageTag(languageTag))
-    }
-
-private data class SettingsText(
-    val settings: String,
-    val settingsIntro: String,
-    val reminders: String,
-    val appearance: String,
-    val about: String,
-    val language: String,
-    val chooseLanguage: String,
-    val system: String,
-    val useDeviceLanguage: String,
-)
-
-private fun settingsText(languageTag: String): SettingsText {
-    val locale = resolvedLocale(languageTag)
-    return when {
-        locale.language == "en" -> SettingsText(
-            settings = "Settings",
-            settingsIntro = "Organized menu for appearance, reminders, Now Bar, and app information.",
-            reminders = "Reminders",
-            appearance = "Appearance",
-            about = "About",
-            language = "Language",
-            chooseLanguage = "Choose language",
-            system = "System",
-            useDeviceLanguage = "Use device language",
-        )
-        locale.language == "pt" && locale.country == "PT" -> SettingsText(
-            settings = "Definições",
-            settingsIntro = "Menu organizado para aspeto, lembretes, Now Bar e informações da aplicação.",
-            reminders = "Lembretes",
-            appearance = "Aspeto",
-            about = "Sobre",
-            language = "Idioma",
-            chooseLanguage = "Escolher idioma",
-            system = "Sistema",
-            useDeviceLanguage = "Usar idioma do dispositivo",
-        )
-        locale.language == "pt" && locale.country == "AO" -> SettingsText(
-            settings = "Definições",
-            settingsIntro = "Menu organizado para aparência, lembretes, Now Bar e informações da aplicação.",
-            reminders = "Lembretes",
-            appearance = "Aparência",
-            about = "Sobre",
-            language = "Idioma",
-            chooseLanguage = "Escolher idioma",
-            system = "Sistema",
-            useDeviceLanguage = "Usar idioma do dispositivo",
-        )
-        locale.language == "es" -> SettingsText(
-            settings = "Ajustes",
-            settingsIntro = "Menú organizado para apariencia, recordatorios, Now Bar e información de la app.",
-            reminders = "Recordatorios",
-            appearance = "Apariencia",
-            about = "Acerca de",
-            language = "Idioma",
-            chooseLanguage = "Elegir idioma",
-            system = "Sistema",
-            useDeviceLanguage = "Usar idioma del dispositivo",
-        )
-        locale.language == "fr" -> SettingsText(
-            settings = "Réglages",
-            settingsIntro = "Menu organisé pour l'apparence, les rappels, la Now Bar et les informations de l'app.",
-            reminders = "Rappels",
-            appearance = "Apparence",
-            about = "À propos",
-            language = "Langue",
-            chooseLanguage = "Choisir la langue",
-            system = "Système",
-            useDeviceLanguage = "Utiliser la langue de l'appareil",
-        )
-        locale.language == "zh" -> SettingsText(
-            settings = "设置",
-            settingsIntro = "用于外观、提醒、Now Bar 和应用信息的整理菜单。",
-            reminders = "提醒",
-            appearance = "外观",
-            about = "关于",
-            language = "语言",
-            chooseLanguage = "选择语言",
-            system = "系统",
-            useDeviceLanguage = "使用设备语言",
-        )
-        locale.language == "ja" -> SettingsText(
-            settings = "設定",
-            settingsIntro = "外観、リマインダー、Now Bar、アプリ情報を整理したメニューです。",
-            reminders = "リマインダー",
-            appearance = "外観",
-            about = "このアプリについて",
-            language = "言語",
-            chooseLanguage = "言語を選択",
-            system = "システム",
-            useDeviceLanguage = "端末の言語を使用",
-        )
-        else -> SettingsText(
-            settings = "Configurações",
-            settingsIntro = "Menu organizado para aparência, lembretes, Now Bar e informações do app.",
-            reminders = "Lembretes",
-            appearance = "Aparência",
-            about = "Sobre",
-            language = "Idioma",
-            chooseLanguage = "Escolha o idioma",
-            system = "Sistema",
-            useDeviceLanguage = "Usar idioma do dispositivo",
-        )
-    }
-}
-
-private fun resolvedLocale(languageTag: String): Locale =
-    if (languageTag == "system") {
-        Locale.getDefault()
-    } else {
-        Locale.forLanguageTag(languageTag)
-    }
-
 @Composable
 private fun AboutSettingsContent() {
     val context = LocalContext.current
+    val text = LocalAppText.current
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -786,7 +659,7 @@ private fun AboutSettingsContent() {
                     Text("💊", style = MaterialTheme.typography.displaySmall)
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Remédios", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
+                    Text(text.common.appName, style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onBackground)
                     Text("Now Bar • Live Updates", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
                 }
             }
@@ -805,7 +678,7 @@ private fun AboutSettingsContent() {
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onBackground,
                 )
-                Text("Desenvolvedor", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text.settings.developer, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SocialLinkButton("IG") {
                         openUrl(context, "https://www.instagram.com/erivaldo_gelson?igsh=MWY5bWRqenNybnpzZg==")
@@ -860,11 +733,12 @@ fun PermissionsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current.permissions
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Permissões") },
+                    title = { Text(text.title) },
                     navigationIcon = {
                         SystemBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
                     },
@@ -885,21 +759,21 @@ fun PermissionsScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 EmptyStateCard(
-                    title = "Câmera",
-                    message = "Necessária para tirar foto do remédio e escanear a embalagem com OCR.",
+                    title = text.cameraTitle,
+                    message = text.cameraMessage,
                 )
                 AnimatedPrimaryActionButton(
-                    text = "Permitir câmera",
+                    text = text.allowCamera,
                     onClick = onRequestCamera,
                     modifier = Modifier.fillMaxWidth(),
                     icon = Icons.Rounded.Notifications,
                 )
                 EmptyStateCard(
-                    title = "Notificações",
-                    message = "Essenciais para lembretes locais, ações rápidas e Live Updates compatíveis.",
+                    title = text.notificationsTitle,
+                    message = text.notificationsMessage,
                 )
                 AnimatedPrimaryActionButton(
-                    text = "Permitir notificações",
+                    text = text.allowNotifications,
                     onClick = onRequestNotifications,
                     modifier = Modifier.fillMaxWidth(),
                     icon = Icons.Rounded.Notifications,
@@ -919,11 +793,12 @@ fun ActiveReminderScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Lembrete ativo") },
+                    title = { Text(text.activeReminder.title) },
                     navigationIcon = {
                         SystemBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
                     },
@@ -945,8 +820,8 @@ fun ActiveReminderScreen(
             ) {
                 if (activeReminder == null) {
                     EmptyStateCard(
-                        title = "Nenhum lembrete ativo",
-                        message = "Quando um horário entrar em andamento, ele aparece aqui com ações rápidas.",
+                        title = text.activeReminder.emptyTitle,
+                        message = text.activeReminder.emptyMessage,
                     )
                 } else {
                     var now by remember(activeReminder.reminderId) { mutableStateOf(LocalDateTime.now()) }
@@ -968,7 +843,7 @@ fun ActiveReminderScreen(
                         .coerceAtLeast(0L)
                     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-                    Text("Dose em andamento", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
+                    Text(text.activeReminder.activeDose, style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
                     Text(
                         activeReminder.medicationName,
                         style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Bold),
@@ -976,8 +851,11 @@ fun ActiveReminderScreen(
                     )
                     Text(activeReminder.dosage, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     EmptyStateCard(
-                        title = "Janela de registro",
-                        message = "Restam ${remainingMinutes} min para registrar. Ativa at? ${activeReminder.expiresAt.format(timeFormatter)} com a??es r?pidas e Now Bar quando compat?vel.",
+                        title = text.activeReminder.registrationWindow,
+                        message = text.activeReminder.registrationWindowMessage.format(
+                            remainingMinutes,
+                            activeReminder.expiresAt.format(timeFormatter),
+                        ),
                     )
                     LinearProgressIndicator(
                         progress = { progress.coerceIn(0f, 1f) },
@@ -986,19 +864,19 @@ fun ActiveReminderScreen(
                         trackColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.14f),
                     )
                     AnimatedPrimaryActionButton(
-                        text = "Registrar tomada",
+                        text = text.common.takeDose,
                         onClick = onTakeNow,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         AnimatedPrimaryActionButton(
-                            text = "Adiar",
+                            text = text.common.snooze,
                             onClick = onSnooze,
                             modifier = Modifier.weight(1f),
                             containerColor = Warning,
                         )
                         AnimatedPrimaryActionButton(
-                            text = "Ignorar",
+                            text = text.common.skip,
                             onClick = onSkip,
                             modifier = Modifier.weight(1f),
                             containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.16f),

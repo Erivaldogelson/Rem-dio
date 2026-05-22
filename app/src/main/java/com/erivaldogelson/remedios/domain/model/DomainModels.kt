@@ -87,7 +87,7 @@ data class NextDoseSnapshot(
 )
 
 data class DashboardSnapshot(
-    val greetingTitle: String = "Próxima dose",
+    val greetingTitle: String = "",
     val nextDose: NextDoseSnapshot? = null,
     val dueTodayCount: Int = 0,
     val pendingTodayCount: Int = 0,

@@ -79,6 +79,7 @@ import com.erivaldogelson.remedios.ui.components.MedicationCard
 import com.erivaldogelson.remedios.ui.components.OcrResultConfirmationCard
 import com.erivaldogelson.remedios.ui.components.PremiumScaffoldBackground
 import com.erivaldogelson.remedios.ui.components.SystemBackButton
+import com.erivaldogelson.remedios.ui.i18n.LocalAppText
 import com.erivaldogelson.remedios.ui.theme.InkCard
 import com.erivaldogelson.remedios.ui.theme.Mist
 import com.erivaldogelson.remedios.ui.theme.MistMuted
@@ -101,6 +102,7 @@ fun MedicationListScreen(
     onDeleteMedication: (MedicationSummary) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -109,16 +111,16 @@ fun MedicationListScreen(
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            Text("Medicamentos", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
+            Text(text.medication.title, style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
             Text(
-                "Seu arsenal diário com imagem, dose, horários e histórico.",
+                text.medication.listSubtitle,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (medications.isEmpty()) {
                 EmptyStateCard(
-                    title = "Nenhum remédio cadastrado",
-                    message = "Adicione o primeiro medicamento para começar a organizar doses, fotos e lembretes.",
+                    title = text.medication.emptyTitle,
+                    message = text.medication.emptyMessage,
                 )
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -161,13 +163,14 @@ fun AddMedicationScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
     val draft = uiState.draft
 
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(if (isEditing) "Editar medicamento" else "Adicionar medicamento") },
+                    title = { Text(if (isEditing) text.medication.editTitle else text.medication.addTitle) },
                     navigationIcon = {
                         SystemBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
                     },
@@ -189,7 +192,7 @@ fun AddMedicationScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Text(
-                    "Cadastre com visual, contexto e horários claros.",
+                    text.medication.formIntro,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -210,7 +213,7 @@ fun AddMedicationScreen(
                     value = draft.name,
                     onValueChange = onNameChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Nome do remédio") },
+                    label = { Text(text.medication.nameLabel) },
                     leadingIcon = { Icon(Icons.Rounded.Medication, contentDescription = null) },
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -218,13 +221,13 @@ fun AddMedicationScreen(
                         value = draft.dosage,
                         onValueChange = onDosageChange,
                         modifier = Modifier.weight(1f),
-                        label = { Text("Dose") },
+                        label = { Text(text.medication.doseLabel) },
                     )
                     OutlinedTextField(
                         value = draft.quantityRemaining.toString(),
                         onValueChange = onQuantityChange,
                         modifier = Modifier.weight(1f),
-                        label = { Text("Qtde restante") },
+                        label = { Text(text.medication.quantityLabel) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
                 }
@@ -233,7 +236,7 @@ fun AddMedicationScreen(
                         FilterChip(
                             selected = draft.form == form,
                             onClick = { onFormChange(form) },
-                            label = { Text(form.name.lowercase().replaceFirstChar(Char::titlecase)) },
+                            label = { Text(text.medicationFormLabel(form)) },
                         )
                     }
                 }
@@ -241,23 +244,23 @@ fun AddMedicationScreen(
                     value = draft.frequencyLabel,
                     onValueChange = onFrequencyChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Frequência") },
+                    label = { Text(text.medication.frequencyLabel) },
                 )
                 OutlinedTextField(
                     value = uiState.timesText,
                     onValueChange = onTimesChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Horários (ex: 08:00, 20:00)") },
+                    label = { Text(text.medication.timesLabel) },
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     DatePickerField(
-                        label = "Início",
+                        label = text.medication.startLabel,
                         date = draft.startDate,
                         onDateChange = { selectedDate -> selectedDate?.let(onStartDateChange) },
                         modifier = Modifier.weight(1f),
                     )
                     DatePickerField(
-                        label = "Fim",
+                        label = text.medication.endLabel,
                         date = draft.endDate,
                         onDateChange = onEndDateChange,
                         allowClear = true,
@@ -268,31 +271,31 @@ fun AddMedicationScreen(
                     value = draft.manufacturer,
                     onValueChange = onManufacturerChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Laboratório / fabricante") },
+                    label = { Text(text.medication.manufacturerLabel) },
                 )
                 OutlinedTextField(
                     value = draft.instructions,
                     onValueChange = onInstructionsChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Instruções") },
+                    label = { Text(text.medication.instructionsLabel) },
                 )
                 OutlinedTextField(
                     value = draft.notes,
                     onValueChange = onNotesChange,
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
-                    label = { Text("Observações") },
+                    label = { Text(text.medication.notesLabel) },
                 )
                 uiState.errorMessage?.let {
                     Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
                 }
                 AnimatedPrimaryActionButton(
                     text = if (uiState.isSaving) {
-                        "Salvando..."
+                        text.medication.saving
                     } else if (isEditing) {
-                        "Atualizar medicamento"
+                        text.medication.update
                     } else {
-                        "Salvar medicamento"
+                        text.medication.save
                     },
                     onClick = onSave,
                     modifier = Modifier.fillMaxWidth(),
@@ -312,18 +315,19 @@ private fun DatePickerField(
     modifier: Modifier = Modifier,
     allowClear: Boolean = false,
 ) {
+    val text = LocalAppText.current
     var showPicker by remember { mutableStateOf(false) }
     val dateFormatter = remember { DateTimeFormatter.ofPattern("dd/MM/yyyy") }
 
     OutlinedTextField(
-        value = date?.format(dateFormatter) ?: "Sem fim",
+        value = date?.format(dateFormatter) ?: text.common.noEnd,
         onValueChange = {},
         modifier = modifier,
         readOnly = true,
         label = { Text(label) },
         trailingIcon = {
             TextButton(onClick = { showPicker = true }) {
-                Text("Escolher")
+                Text(text.common.choose)
             }
         },
     )
@@ -343,7 +347,7 @@ private fun DatePickerField(
                         showPicker = false
                     },
                 ) {
-                    Text("Confirmar")
+                    Text(text.common.confirm)
                 }
             },
             dismissButton = {
@@ -355,11 +359,11 @@ private fun DatePickerField(
                                 showPicker = false
                             },
                         ) {
-                            Text("Sem fim")
+                            Text(text.common.noEnd)
                         }
                     }
                     TextButton(onClick = { showPicker = false }) {
-                        Text("Cancelar")
+                        Text(text.common.cancel)
                     }
                 }
             },
@@ -377,6 +381,7 @@ private fun ImageSelectorCard(
     onCaptureImage: () -> Unit,
     onScan: () -> Unit,
 ) {
+    val text = LocalAppText.current
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = MaterialTheme.shapes.large,
@@ -387,11 +392,11 @@ private fun ImageSelectorCard(
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Foto do remédio", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+            Text(text.medication.imageTitle, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
             if (imageUri != null) {
                 AsyncImage(
                     model = imageUri,
-                    contentDescription = "Imagem do remédio",
+                    contentDescription = text.medication.imageDescription,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp),
@@ -404,23 +409,23 @@ private fun ImageSelectorCard(
                         .background(SoftLilac.copy(alpha = 0.08f), MaterialTheme.shapes.large),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("Sem foto ainda", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text.medication.noPhotoYet, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             if (isAnalyzing) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Text("Analisando imagem e OCR...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text.medication.analyzingImage, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(onClick = onCaptureImage, label = { Text("Câmera") }, leadingIcon = {
+                AssistChip(onClick = onCaptureImage, label = { Text(text.medication.camera) }, leadingIcon = {
                     Icon(Icons.Rounded.CameraAlt, contentDescription = null)
                 })
-                AssistChip(onClick = onPickImage, label = { Text("Galeria") }, leadingIcon = {
+                AssistChip(onClick = onPickImage, label = { Text(text.medication.gallery) }, leadingIcon = {
                     Icon(Icons.Rounded.Image, contentDescription = null)
                 })
-                AssistChip(onClick = onScan, label = { Text("Escanear") }, leadingIcon = {
+                AssistChip(onClick = onScan, label = { Text(text.medication.scan) }, leadingIcon = {
                     Icon(Icons.Rounded.QrCodeScanner, contentDescription = null)
                 })
             }
@@ -434,11 +439,12 @@ fun MedicationDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(details?.name ?: "Detalhes") },
+                    title = { Text(details?.name ?: text.medication.details) },
                     navigationIcon = {
                         SystemBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
                     },
@@ -467,15 +473,15 @@ fun MedicationDetailScreen(
                         ) {
                             Text(medication.name, style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
                             Text("${medication.dosage} • ${medication.frequencyLabel}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("Horários: ${medication.schedules.joinToString { it.format(DateTimeFormatter.ofPattern("HH:mm")) }}", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("Instruções: ${medication.instructions}", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("Observações: ${medication.notes}", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("Quantidade restante: ${medication.quantityRemaining}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${text.medication.schedulesPrefix}: ${medication.schedules.joinToString { it.format(DateTimeFormatter.ofPattern("HH:mm")) }}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${text.medication.instructionsPrefix}: ${medication.instructions}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${text.medication.notesPrefix}: ${medication.notes}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${text.medication.quantityRemainingPrefix}: ${medication.quantityRemaining}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 } ?: EmptyStateCard(
-                    title = "Detalhes indisponíveis",
-                    message = "Não foi possível carregar este medicamento.",
+                    title = text.medication.unavailableTitle,
+                    message = text.medication.unavailableMessage,
                 )
             }
         }
@@ -488,6 +494,7 @@ fun ScanMedicationScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = LocalAppText.current
     var suggestion by remember { mutableStateOf(OcrSuggestion()) }
 
     PremiumScaffoldBackground(modifier = modifier.fillMaxSize()) {
@@ -498,7 +505,7 @@ fun ScanMedicationScreen(
                 },
             )
             TopAppBar(
-                title = { Text("Escanear remédio") },
+                title = { Text(text.medication.scanTitle) },
                 navigationIcon = {
                     SystemBackButton(onBack = onBack, modifier = Modifier.padding(start = 12.dp))
                 },
@@ -521,17 +528,17 @@ fun ScanMedicationScreen(
                         .padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Text("Leitura em tempo real", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+                    Text(text.medication.liveReading, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
                     Text(
-                        suggestion.suggestedName.ifBlank { "Aponte a câmera para a embalagem" },
+                        suggestion.suggestedName.ifBlank { text.medication.pointCamera },
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (suggestion.suggestedDosage.isNotBlank()) {
-                        Text("Dose detectada: ${suggestion.suggestedDosage}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${text.medication.detectedDosePrefix}: ${suggestion.suggestedDosage}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     AnimatedPrimaryActionButton(
-                        text = "Usar esta leitura",
+                        text = text.medication.useReading,
                         onClick = { onConfirmSuggestion(suggestion) },
                         modifier = Modifier.fillMaxWidth(),
                         icon = Icons.Rounded.QrCodeScanner,
