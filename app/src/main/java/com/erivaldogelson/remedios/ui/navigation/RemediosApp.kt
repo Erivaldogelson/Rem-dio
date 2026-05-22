@@ -324,22 +324,24 @@ private data class NavLabels(
 )
 
 private fun navLabels(languageTag: String): NavLabels {
-    val language = resolvedLanguage(languageTag)
-    return when (language) {
-        "en" -> NavLabels("Today", "Meds", "New", "History", "Settings")
-        "es" -> NavLabels("Hoy", "Medic.", "Nuevo", "Historial", "Ajustes")
-        "fr" -> NavLabels("Auj.", "Médic.", "Nouv.", "Hist.", "Régl.")
-        "de" -> NavLabels("Heute", "Medik.", "Neu", "Verlauf", "Einst.")
-        "it" -> NavLabels("Oggi", "Farm.", "Nuovo", "Storico", "Impost.")
+    val locale = resolvedLocale(languageTag)
+    return when {
+        locale.language == "en" -> NavLabels("Today", "Meds", "New", "History", "Settings")
+        locale.language == "pt" && locale.country == "PT" -> NavLabels("Hoje", "Remédios", "Novo", "Histórico", "Defin.")
+        locale.language == "pt" && locale.country == "AO" -> NavLabels("Hoje", "Remédios", "Novo", "Histórico", "Defin.")
+        locale.language == "es" -> NavLabels("Hoy", "Medic.", "Nuevo", "Historial", "Ajustes")
+        locale.language == "fr" -> NavLabels("Auj.", "Médic.", "Nouv.", "Hist.", "Régl.")
+        locale.language == "zh" -> NavLabels("今天", "药品", "新增", "记录", "设置")
+        locale.language == "ja" -> NavLabels("今日", "薬", "追加", "履歴", "設定")
         else -> NavLabels("Hoje", "Remédios", "Novo", "Histórico", "Config.")
     }
 }
 
-private fun resolvedLanguage(languageTag: String): String =
+private fun resolvedLocale(languageTag: String): java.util.Locale =
     if (languageTag == "system") {
-        java.util.Locale.getDefault().language
+        java.util.Locale.getDefault()
     } else {
-        java.util.Locale.forLanguageTag(languageTag).language
+        java.util.Locale.forLanguageTag(languageTag)
     }
 
 private const val PageTransitionMillis = 280

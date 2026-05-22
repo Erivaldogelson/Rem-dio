@@ -239,8 +239,6 @@ fun SettingsScreen(
         LanguagePickerSheet(
             selectedLanguageTag = settings.languageTag,
             title = text.chooseLanguage,
-            systemTitle = text.system,
-            systemSubtitle = text.useDeviceLanguage,
             onSelectLanguage = { tag ->
                 onLanguageChange(tag)
                 showLanguageSheet = false
@@ -568,29 +566,10 @@ private val nowBarColorOptions = listOf(
 private fun LanguagePickerSheet(
     selectedLanguageTag: String,
     title: String,
-    systemTitle: String,
-    systemSubtitle: String,
     onSelectLanguage: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val languages = remember {
-        buildList {
-            add(LanguageOption("system", systemTitle, systemSubtitle))
-            addAll(
-                Locale.getAvailableLocales()
-                    .filter { it.language.isNotBlank() && it.toLanguageTag().isNotBlank() }
-                    .distinctBy { it.toLanguageTag() }
-                    .sortedWith(compareBy<Locale> { it.getDisplayLanguage(Locale.ENGLISH) }.thenBy { it.country })
-                    .map { locale ->
-                        LanguageOption(
-                            tag = locale.toLanguageTag(),
-                            title = locale.getDisplayName(locale).replaceFirstChar(Char::titlecase),
-                            subtitle = locale.toLanguageTag(),
-                        )
-                    },
-            )
-        }
-    }
+    val languages = remember { supportedLanguageOptions }
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -649,11 +628,23 @@ private data class LanguageOption(
     val subtitle: String,
 )
 
+private val supportedLanguageOptions = listOf(
+    LanguageOption("en", "Inglês", "English"),
+    LanguageOption("pt-PT", "Português de Portugal", "Portugal"),
+    LanguageOption("pt-BR", "Português do Brasil", "Brasil"),
+    LanguageOption("pt-AO", "Português de Angola", "Angola"),
+    LanguageOption("es", "Espanhol", "Español"),
+    LanguageOption("fr", "Francês", "Français"),
+    LanguageOption("zh-CN", "Chinês", "中文"),
+    LanguageOption("ja-JP", "Japonês", "日本語"),
+)
+
 private fun languageSubtitle(languageTag: String): String =
     if (languageTag == "system") {
         settingsText(languageTag).system
     } else {
-        Locale.forLanguageTag(languageTag).getDisplayName(Locale.forLanguageTag(languageTag))
+        supportedLanguageOptions.firstOrNull { it.tag == languageTag }?.title
+            ?: Locale.forLanguageTag(languageTag).getDisplayName(Locale.forLanguageTag(languageTag))
     }
 
 private data class SettingsText(
@@ -669,9 +660,9 @@ private data class SettingsText(
 )
 
 private fun settingsText(languageTag: String): SettingsText {
-    val language = if (languageTag == "system") Locale.getDefault().language else Locale.forLanguageTag(languageTag).language
-    return when (language) {
-        "en" -> SettingsText(
+    val locale = resolvedLocale(languageTag)
+    return when {
+        locale.language == "en" -> SettingsText(
             settings = "Settings",
             settingsIntro = "Organized menu for appearance, reminders, Now Bar, and app information.",
             reminders = "Reminders",
@@ -682,7 +673,29 @@ private fun settingsText(languageTag: String): SettingsText {
             system = "System",
             useDeviceLanguage = "Use device language",
         )
-        "es" -> SettingsText(
+        locale.language == "pt" && locale.country == "PT" -> SettingsText(
+            settings = "Definições",
+            settingsIntro = "Menu organizado para aspeto, lembretes, Now Bar e informações da aplicação.",
+            reminders = "Lembretes",
+            appearance = "Aspeto",
+            about = "Sobre",
+            language = "Idioma",
+            chooseLanguage = "Escolher idioma",
+            system = "Sistema",
+            useDeviceLanguage = "Usar idioma do dispositivo",
+        )
+        locale.language == "pt" && locale.country == "AO" -> SettingsText(
+            settings = "Definições",
+            settingsIntro = "Menu organizado para aparência, lembretes, Now Bar e informações da aplicação.",
+            reminders = "Lembretes",
+            appearance = "Aparência",
+            about = "Sobre",
+            language = "Idioma",
+            chooseLanguage = "Escolher idioma",
+            system = "Sistema",
+            useDeviceLanguage = "Usar idioma do dispositivo",
+        )
+        locale.language == "es" -> SettingsText(
             settings = "Ajustes",
             settingsIntro = "Menú organizado para apariencia, recordatorios, Now Bar e información de la app.",
             reminders = "Recordatorios",
@@ -693,7 +706,7 @@ private fun settingsText(languageTag: String): SettingsText {
             system = "Sistema",
             useDeviceLanguage = "Usar idioma del dispositivo",
         )
-        "fr" -> SettingsText(
+        locale.language == "fr" -> SettingsText(
             settings = "Réglages",
             settingsIntro = "Menu organisé pour l'apparence, les rappels, la Now Bar et les informations de l'app.",
             reminders = "Rappels",
@@ -704,27 +717,27 @@ private fun settingsText(languageTag: String): SettingsText {
             system = "Système",
             useDeviceLanguage = "Utiliser la langue de l'appareil",
         )
-        "de" -> SettingsText(
-            settings = "Einstellungen",
-            settingsIntro = "Menü für Darstellung, Erinnerungen, Now Bar und App-Informationen.",
-            reminders = "Erinnerungen",
-            appearance = "Darstellung",
-            about = "Info",
-            language = "Sprache",
-            chooseLanguage = "Sprache wählen",
-            system = "System",
-            useDeviceLanguage = "Gerätesprache verwenden",
+        locale.language == "zh" -> SettingsText(
+            settings = "设置",
+            settingsIntro = "用于外观、提醒、Now Bar 和应用信息的整理菜单。",
+            reminders = "提醒",
+            appearance = "外观",
+            about = "关于",
+            language = "语言",
+            chooseLanguage = "选择语言",
+            system = "系统",
+            useDeviceLanguage = "使用设备语言",
         )
-        "it" -> SettingsText(
-            settings = "Impostazioni",
-            settingsIntro = "Menu per aspetto, promemoria, Now Bar e informazioni dell'app.",
-            reminders = "Promemoria",
-            appearance = "Aspetto",
-            about = "Informazioni",
-            language = "Lingua",
-            chooseLanguage = "Scegli lingua",
-            system = "Sistema",
-            useDeviceLanguage = "Usa lingua del dispositivo",
+        locale.language == "ja" -> SettingsText(
+            settings = "設定",
+            settingsIntro = "外観、リマインダー、Now Bar、アプリ情報を整理したメニューです。",
+            reminders = "リマインダー",
+            appearance = "外観",
+            about = "このアプリについて",
+            language = "言語",
+            chooseLanguage = "言語を選択",
+            system = "システム",
+            useDeviceLanguage = "端末の言語を使用",
         )
         else -> SettingsText(
             settings = "Configurações",
@@ -739,6 +752,13 @@ private fun settingsText(languageTag: String): SettingsText {
         )
     }
 }
+
+private fun resolvedLocale(languageTag: String): Locale =
+    if (languageTag == "system") {
+        Locale.getDefault()
+    } else {
+        Locale.forLanguageTag(languageTag)
+    }
 
 @Composable
 private fun AboutSettingsContent() {
